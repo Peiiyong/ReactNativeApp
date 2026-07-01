@@ -1,33 +1,29 @@
 import { router } from "expo-router";
+import { onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import "../../global.css";
+import { Text, View } from "react-native";
+import { auth } from "../firebase/firebase";
 
-export default function SplashScreen() {
+export default function Splash() {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace("/login");
-    }, 5000);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setTimeout(() => {
+        if (user) {
+          router.replace("/home");
+        } else {
+          router.replace("/login");
+        }
+      }, 2000); 
+    });
 
-    return () => clearTimeout(timer);
+    return unsubscribe;
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>My App</Text>
-      <Text>Loading...</Text>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold" }}>
+        My App Loading...
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 32,
-    fontWeight: "bold",
-  },
-});
