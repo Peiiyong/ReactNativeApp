@@ -5,6 +5,7 @@ export const Colors = {
     buttonGradient: ["#9333EA", "#5B21B6", "#2E1065"] as const,
     primaryGradient: ["#2E1065", "#5B21B6", "#9333EA"] as const,
     primary: "#3B82F6",
+    
     errorMsg: "#EF4444",
     successMsg: "#22C55E",
   },
