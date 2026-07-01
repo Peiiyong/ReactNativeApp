@@ -1,0 +1,21 @@
+import BottomNavBar from "@/components/BottomNavBar";
+import { LinearGradient } from "expo-linear-gradient";
+import { Text } from "react-native";
+import { useThemeColors } from "../theme/useThemeColors";
+
+export default function Profile() {
+  const colors = useThemeColors();
+
+  return (
+    <LinearGradient
+      colors={colors.innerBackground}
+      style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+    >
+      <Text style={{ color: "white", fontSize: 30 }}>
+        Profile Page
+      </Text>
+
+      <BottomNavBar />
+    </LinearGradient>
+  );
+}
