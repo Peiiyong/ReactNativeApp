@@ -1,7 +1,7 @@
 export const Colors = {
   light: {
-    background: "#FFFFFF",
-    text: "#111111",
+    background: "#5353ff",
+    text: "#FFFFFF",
     primary: "#3B82F6",
   },
   dark: {
