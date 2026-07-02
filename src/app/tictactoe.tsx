@@ -1,20 +1,20 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { push, ref } from 'firebase/database';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-const home = async () => {
-    router.replace("/home");
-};
+import { auth, database } from '../firebase/firebase';
 
 // initial state of the tic tac toe board
 const initialBoard = Array(9).fill(null);
 
 const TicTacToeGame = () => {
-    const [board, setBoard] = useState(initialBoard); 
+    const startTimeRef = useRef<Date | null>(null);
+    const [board, setBoard] = useState(initialBoard);
     const [isPlayerTurn, setIsPlayerTurn] = useState(true); // true for player X, false for player O
     const [winner, setWinner] = useState(null); // null for no winner, 'X' for player X, 'O' for player O
 
     useEffect(() => {
+        startTimeRef.current = new Date();
         checkWinner();
     }, [board]);
 
@@ -62,13 +62,50 @@ const TicTacToeGame = () => {
         setWinner(null);
     };
 
+    const home = async () => {
+        if (!startTimeRef.current) {
+            router.replace('/home');
+            return;
+        }
+
+        const endTime = new Date();
+        // calculate the duration in milliseconds
+        const durationMs = endTime.getTime() - startTimeRef.current.getTime();
+        // convert milliseconds to a more user-friendly format
+        const totalSeconds = Math.floor(durationMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const durationString = minutes > 0 ? `${minutes} mins ${seconds} secs` : `${seconds} secs`;
+
+        const user = auth.currentUser;
+        if (user) {
+            try {
+                // save history to Firebase Realtime Database
+                const userHistoryRef = ref(database, `user_history/${user.uid}`);
+
+                // push game data to Firebase
+                await push(userHistoryRef, {
+                    gameName: "Tic Tac Toe",
+                    startTime: startTimeRef.current.toLocaleString(), // the time when the game was played (e.g., 2026/7/2 14:30:22)
+                    duration: durationString,                         // game duration (e.g., 1 min 15 secs)
+                    createdAt: endTime.getTime()                      // timestamp for sorting purposes
+                });
+                console.log("Game history saved successfully to the database!");
+            } catch (error) {
+                console.error("Game history saved failed:", error);
+            }
+        }
+
+        router.replace("/home");
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.board}>
                 {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(index => (
                     <TouchableOpacity key={index} style={styles.square} onPress={() => handleSquarePress(index)}
-                    disabled={!!(board[index] || winner)}>
-                        <Text style={[styles.squareText, {color: board[index] === 'X' ? '#FF0000' : '#0000FF'}]}>
+                        disabled={!!(board[index] || winner)}>
+                        <Text style={[styles.squareText, { color: board[index] === 'X' ? '#FF0000' : '#0000FF' }]}>
                             {board[index] ? board[index].toString() : ''}
                         </Text>
                     </TouchableOpacity>
