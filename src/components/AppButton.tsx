@@ -30,11 +30,11 @@ export default function AppButton({ title, onPress, icon }: AppButtonProps) {
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15,}}>      
-            <Text style={{ fontSize: 16, color: colors.text, fontWeight: "bold" }}>
+            <Text style={{ fontSize: 16, color: colors.text2, fontWeight: "bold" }}>
             {title}
             </Text>
             {icon && (
-            <Ionicons name={icon} size={20} color={colors.text} />
+            <Ionicons name={icon} size={20} color={colors.text2} />
             )}  
         </View>
       </LinearGradient>
