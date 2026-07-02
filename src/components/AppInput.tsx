@@ -49,7 +49,7 @@ export default function AppInput({
           color: colors.text,
         }}
         placeholder={placeholder}
-        placeholderTextColor="#FFFFFF"
+        placeholderTextColor={colors.navDefaultIcon}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={hidePassword}

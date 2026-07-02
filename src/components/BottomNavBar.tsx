@@ -56,7 +56,7 @@ export default function BottomNavBar() {
             <Ionicons
               name={tab.icon as any}
               size={28}
-              color={active ? colors.background : colors.navDefaultIcon}
+              color={active ? colors.text : colors.navDefaultIcon}
             />
           </Pressable>
         );

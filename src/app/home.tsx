@@ -26,7 +26,7 @@ export default function Home() {
         padding: 20,
       }}
     >
-      <Text style={{ fontSize: 28, fontWeight: "bold", color: "white", marginBottom: 10 }}> Home Page</Text>
+      <Text style={{ fontSize: 28, fontWeight: "bold", color: colors.text, marginBottom: 10 }}> Home Page</Text>
       <AppButton
         title="L O G O U T"
         icon="log-out-outline"

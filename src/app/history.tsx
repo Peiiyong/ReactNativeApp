@@ -11,7 +11,7 @@ export default function History() {
       colors={colors.innerBackground}
       style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
     >
-      <Text style={{ color: "white", fontSize: 30 }}>
+      <Text style={{ color: colors.text, fontSize: 30 }}>
         History Page
       </Text>
 
