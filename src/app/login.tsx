@@ -17,6 +17,11 @@ export default function Login() {
 
   const login = async () => {
     try {
+    if (!email || !password ) {
+      setIsError(true);
+      setMessage("Please complete all required fields.");
+      return;
+    }
       await signInWithEmailAndPassword(auth, email, password);
       setIsError(false);
       setMessage("Login successful!");
