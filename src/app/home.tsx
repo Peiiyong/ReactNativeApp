@@ -3,7 +3,7 @@ import BottomNavBar from "@/components/BottomNavBar";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { signOut } from "firebase/auth";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import { auth } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -12,6 +12,10 @@ export default function Home() {
   const logout = async () => {
     await signOut(auth);
     router.replace("/login");
+  };
+
+  const tictactoe = async () => {
+    router.replace("/tictactoe");
   };
 
   return (
@@ -26,7 +30,15 @@ export default function Home() {
         padding: 20,
       }}
     >
+
       <Text style={{ fontSize: 28, fontWeight: "bold", color: colors.text, marginBottom: 10 }}> Home Page</Text>
+      <AppButton
+        title="Tic Tac Toe"
+        onPress={tictactoe}
+      />
+
+      <View style={{ height: 15 }} />
+
       <AppButton
         title="L O G O U T"
         icon="log-out-outline"
