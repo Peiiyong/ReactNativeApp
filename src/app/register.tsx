@@ -1,7 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { ref, set } from "firebase/database";
+import { get, ref, set } from "firebase/database";
 import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
 import { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
@@ -13,7 +13,7 @@ import { useThemeColors } from "../theme/useThemeColors";
 export default function Register() {
   const colors = useThemeColors();
 
-  const [username, setUsername] = useState("");  
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -77,11 +77,28 @@ export default function Register() {
         }
       }
 
+      const usersRef = ref(database, "users");
+      const snapshot = await get(usersRef);
+      let nextId = "U00001"; // 默认第一个用户
+
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        const keys = Object.keys(userData).filter(key => key.startsWith("U"));
+        if (keys.length > 0) {
+          keys.sort(); 
+          const lastKey = keys[keys.length - 1]; 
+          const lastNum = parseInt(lastKey.substring(1), 10); 
+          nextId = `U${String(lastNum + 1).padStart(5, '0')}`; 
+        }
+      }
+
       // 2. Create User Profile in Realtime Database
-      const userRef = ref(database, `users/${user.uid}`);
+      const userRef = ref(database, `users/${nextId}`); 
+      
       console.log("Saving user profile to Realtime Database:", userRef.toString());
       await set(userRef, {
-        userId: user.uid,
+        userId: nextId,      
+        authUid: user.uid,        // save the Firebase Auth UID for reference
         email,
         userName: username,
         profilePicture: profileUrl,
@@ -90,7 +107,8 @@ export default function Register() {
         currentPoints: 0,
         createdAt: Date.now(),
       });
-      console.log("User profile saved successfully for:", user.uid);
+      
+      console.log("User profile saved successfully for:", nextId);
 
       setIsError(false);
       setMessage("Registration successful!");
@@ -135,7 +153,7 @@ export default function Register() {
           }}
         />
       </TouchableOpacity>
-      
+
       <AppInput
         placeholder="Username"
         icon="person-outline"
@@ -181,7 +199,7 @@ export default function Register() {
       </View>
 
       {message !== "" && (
-        <Text style={{ color: isError ? colors.errorMsg : colors.successMsg, textAlign: "center", fontWeight: "600",}}>
+        <Text style={{ color: isError ? colors.errorMsg : colors.successMsg, textAlign: "center", fontWeight: "600", }}>
           {message}
         </Text>
       )}
