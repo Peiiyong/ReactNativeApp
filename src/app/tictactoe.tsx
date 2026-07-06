@@ -1,13 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { push, ref, get, update } from 'firebase/database';
 import { useEffect, useRef, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, BackHandler } from 'react-native';
 import { auth, database } from '../firebase/firebase';
+import { useThemeColors } from '../theme/useThemeColors';
 
 const initialBoard = Array(9).fill(null);
 const TIMER_LIMIT = 8; // countdown timer limit in seconds
 
 const TicTacToeGame = () => {
+    const colors = useThemeColors();
     const { gameConfigId, point } = useLocalSearchParams<{ gameConfigId: string; point: string }>();
     const gamePoints = parseInt(point || '10', 10);
     const configId = gameConfigId || 'default_config_id';
@@ -240,12 +243,12 @@ const TicTacToeGame = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.statusCard}>
-                <Text style={styles.resultText}>{getResultText()}</Text>
+        <LinearGradient colors={colors.innerBackground} style={styles.container}>
+            <View style={[styles.statusCard, { backgroundColor: colors.cardBackground }]}> 
+                <Text style={[styles.resultText, { color: colors.text }]}>{getResultText()}</Text>
                 {!winner && (
-                    <View style={styles.timerContainer}>
-                        <Text style={[styles.timerText, timeLeft <= 3 ? styles.timerUrgent : null]}>
+                    <View style={[styles.timerContainer, { backgroundColor: colors.background }]}> 
+                        <Text style={[styles.timerText, timeLeft <= 3 ? styles.timerUrgent : null, { color: timeLeft <= 3 ? '#EF4444' : colors.successMsg }]}>
                             {timeLeft}s
                         </Text>
                     </View>
@@ -253,34 +256,34 @@ const TicTacToeGame = () => {
             </View>
 
             <View style={styles.vsContainer}>
-                <View style={[styles.playerBox, isPlayerTurn && !winner ? styles.activeTurn : null]}>
-                    <Text style={styles.roleTitle}>Player (X)</Text>
-                    <Text style={styles.emojiText}>
+                <View style={[styles.playerBox, { backgroundColor: colors.cardBackground }, isPlayerTurn && !winner ? styles.activeTurn : null]}>
+                    <Text style={[styles.roleTitle, { color: colors.navDefaultIcon }]}>Player (X)</Text>
+                    <Text style={[styles.emojiText, { color: colors.text }]}>
                         {winner === 'X' || winner === 'forfeit_ai' ? '＼(￣▽￣)／' : (winner === 'O' || winner === 'forfeit_player' ? '(╯^╰)' : '( ＇ω＇ )')}
                     </Text>
                 </View>
 
-                <View style={styles.vsDivider}><Text style={styles.vsDividerText}>VS</Text></View>
+                <View style={styles.vsDivider}><Text style={[styles.vsDividerText, { color: colors.navDefaultIcon }]}>VS</Text></View>
 
-                <View style={[styles.playerBox, !isPlayerTurn && !winner ? styles.activeTurn : null]}>
-                    <Text style={styles.roleTitle}>AI (O)</Text>
-                    <Text style={styles.emojiText}>
+                <View style={[styles.playerBox, { backgroundColor: colors.cardBackground }, !isPlayerTurn && !winner ? styles.activeTurn : null]}>
+                    <Text style={[styles.roleTitle, { color: colors.navDefaultIcon }]}>AI (O)</Text>
+                    <Text style={[styles.emojiText, { color: colors.text }]}>
                         {winner === 'O' || winner === 'forfeit_player' ? '└( 🤖 )┘' : (winner === 'X' || winner === 'forfeit_ai' ? '( 🤖 💢 )' : '[ 🤖 ]')}
                     </Text>
                 </View>
             </View>
 
-            <View style={styles.boardCard}>
+            <View style={[styles.boardCard, { backgroundColor: colors.cardBackground }]}> 
                 <View style={styles.board}>
                     {board.map((value, index) => (
                         <TouchableOpacity
                             key={index}
-                            style={styles.square}
+                            style={[styles.square, { borderColor: colors.navDefaultIcon }]}
                             onPress={() => handleSquarePress(index)}
                             disabled={!!(value || winner || !isPlayerTurn)}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.squareText, value === 'X' ? styles.colorX : styles.colorO]}>
+                            <Text style={[styles.squareText, value === 'X' ? { color: colors.primary } : { color: colors.successMsg }]}>
                                 {value}
                             </Text>
                         </TouchableOpacity>
@@ -291,7 +294,7 @@ const TicTacToeGame = () => {
             <View style={styles.actionArea}>
                 {/* 游戏中点击此按钮同样执行安全平局退出逻辑 */}
                 <TouchableOpacity
-                    style={styles.secondaryBtn}
+                    style={[styles.secondaryBtn, { backgroundColor: colors.cardBackground, borderColor: colors.navDefaultIcon }]}
                     onPress={() => {
                         if (!winner) {
                             Alert.alert("Exit Match?", "Quit now? It will be recorded as a Draw.", [
@@ -304,17 +307,16 @@ const TicTacToeGame = () => {
                     }}
                     disabled={isSaving}
                 >
-                    {isSaving ? <ActivityIndicator color="#6B7280" size="small" /> : <Text style={styles.secondaryBtnText}>Back to Lobby</Text>}
+                    {isSaving ? <ActivityIndicator color={colors.primary} size="small" /> : <Text style={[styles.secondaryBtnText, { color: colors.text } ]}>Back to Lobby</Text>}
                 </TouchableOpacity>
             </View>
-        </View>
+    </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F3F4F6',
         justifyContent: 'center',
         paddingHorizontal: 24,
     },
@@ -328,17 +330,14 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
         shadowRadius: 10,
-        elevation: 2,
     },
     resultText: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#1F2937',
         textAlign: 'center',
     },
     timerContainer: {
         marginTop: 10,
-        backgroundColor: '#F3F4F6',
         paddingHorizontal: 16,
         paddingVertical: 4,
         borderRadius: 999,
@@ -358,7 +357,6 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     playerBox: {
-        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: 14,
         width: '43%',
@@ -375,13 +373,11 @@ const styles = StyleSheet.create({
     roleTitle: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6B7280',
         marginBottom: 6,
     },
     emojiText: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#374151',
         textAlign: 'center',
     },
     vsDivider: {
@@ -395,7 +391,6 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
     },
     boardCard: {
-        backgroundColor: '#FFFFFF',
         borderRadius: 24,
         padding: 12,
         alignItems: 'center',
@@ -403,7 +398,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.06,
         shadowRadius: 20,
-        elevation: 4,
         marginBottom: 24,
     },
     board: {
@@ -434,12 +428,10 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     secondaryBtn: {
-        backgroundColor: '#FFFFFF',
         paddingVertical: 15,
         borderRadius: 16,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#E5E7EB',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.03,

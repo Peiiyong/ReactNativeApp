@@ -5,6 +5,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { onValue, ref } from "firebase/database";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -13,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { auth, database } from "../firebase/firebase";
@@ -30,19 +32,21 @@ type LeaderboardItem = {
   id: string;
   name: string;
   level: number;
-  score: number;
+  exp: number;
+};
+
+type GameConfigItem = {
+  id: string;
+  gameId: string;
+  difficulty: string;
+  point: number;
+  targetDuration: number;
 };
 
 const bannerImages = [
   require("../../assets/images/banner.jpg"),
   require("../../assets/images/banner.jpg"),
   require("../../assets/images/banner.jpg"),
-];
-
-const leaderboardData: LeaderboardItem[] = [
-  { id: "1", name: "Avery", level: 12, score: 980 },
-  { id: "2", name: "Mina", level: 10, score: 860 },
-  { id: "3", name: "Jemin", level: 8, score: 740 },
 ];
 
 export default function Home() {
@@ -57,6 +61,9 @@ export default function Home() {
   const [selectedGame, setSelectedGame] = useState<GameItem | null>(null);
   const [gameModalVisible, setGameModalVisible] = useState(false);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [gameConfigs, setGameConfigs] = useState<GameConfigItem[]>([]);
+  const [configsLoading, setConfigsLoading] = useState(true);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardItem[]>([]);
 
   const { width } = Dimensions.get("window");
   const bannerWidth = width - 40;
@@ -101,29 +108,73 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const configRef = ref(database, "game_config");
+    const unsubscribe = onValue(configRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        setGameConfigs([]);
+        setConfigsLoading(false);
+        return;
+      }
+
+      const nextConfigs: GameConfigItem[] = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
+      setGameConfigs(nextConfigs);
+      setConfigsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const usersRef = ref(database, "users");
+    const unsubscribe = onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        setLeaderboardData([]);
+        return;
+      }
+
+      const nextLeaderboard: LeaderboardItem[] = Object.keys(data)
+        .map((key) => {
+          const user = data[key] as any;
+          return {
+            id: key,
+            name: user.userName ?? user.username ?? user.email?.split("@")[0] ?? "User",
+            level: user.level ?? 0,
+            exp: user.exp ?? 0,
+          };
+        })
+        .sort((a, b) => {
+          if (b.level !== a.level) {
+            return b.level - a.level;
+          }
+          return b.exp - a.exp;
+        });
+
+      setLeaderboardData(nextLeaderboard);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const logout = async () => {
     await signOut(auth);
     router.replace("/login");
   };
 
-  const openGameDialog = (game: GameItem) => {
+  const startSelectedGame = (game: GameItem) => {
     setSelectedGame(game);
     setGameModalVisible(true);
   };
 
-  const startSelectedGame = () => {
-    if (selectedGame) {
-      const gameId = selectedGame.id; 
-      setGameModalVisible(false);
-      setSelectedGame(null);
-      
-      router.push({
-        pathname: "/difficulty" as any,
-        params: { gameId: gameId }
-      });
-    } else {
-      setGameModalVisible(false);
-    }
+  const handleStartGameConfig = (configId: string) => {
+    setGameModalVisible(false);
+    setSelectedGame(null);
+    router.push({
+      pathname: "/tictactoe",
+      params: { gameConfigId: configId },
+    });
   };
 
   const goToNextBanner = () => {
@@ -223,7 +274,7 @@ export default function Home() {
 
         <View style={styles.listBlock}>
           {games.map((game) => (
-            <Pressable key={game.id} onPress={() => openGameDialog(game)}>
+            <Pressable key={game.id} onPress={() => startSelectedGame(game)}>
               <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
                 <View style={styles.gameCardRow}>
                   <View style={styles.gameTextWrap}>
@@ -251,7 +302,7 @@ export default function Home() {
         </View>
 
         <View style={styles.listBlock}>
-          {leaderboardData.map((item, index) => (
+          {leaderboardData.slice(0, 10).map((item, index) => (
             <View key={item.id} style={[styles.card, { backgroundColor: colors.cardBackground }]}>
               <View style={styles.leaderboardRow}>
                 <View style={[styles.rankBadge, { backgroundColor: colors.primary }]}>
@@ -260,10 +311,10 @@ export default function Home() {
 
                 <View style={styles.leaderboardTextWrap}>
                   <Text style={[styles.leaderboardName, { color: colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.leaderboardMeta, { color: colors.navDefaultIcon }]}>Level {item.level}</Text>
+                  <Text style={[styles.leaderboardMeta, { color: colors.navDefaultIcon }]}>Level {item.level} · Exp {item.exp}</Text>
                 </View>
 
-                <Text style={[styles.scoreText, { color: colors.text }]}>{item.score}</Text>
+                <Text style={[styles.scoreText, { color: colors.text }]}>{item.exp}</Text>
               </View>
             </View>
           ))}
@@ -275,24 +326,36 @@ export default function Home() {
       <Modal visible={gameModalVisible} transparent animationType="fade" onRequestClose={() => setGameModalVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setGameModalVisible(false)}>
           <Pressable style={[styles.modalCard, { backgroundColor: colors.cardBackground }]} onPress={() => {}}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Start Game</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Select Difficulty</Text>
+            <Text style={{ fontSize: 14, color: colors.text, opacity: 0.7}}>
+              Choose your challenge level
+            </Text>
 
-            <Text style={[styles.modalGameName, { color: colors.text }]}>{selectedGame?.gameName ?? "Game"}</Text>
-            <Text style={[styles.modalMeta, { color: colors.navDefaultIcon }]}>Required level {selectedGame?.requiredLevel ?? 1}</Text>
+            {configsLoading ? (
+              <ActivityIndicator size="large" color={colors.text} style={{ marginVertical: 20 }} />
+            ) : (
+              gameConfigs.filter((config) => config.gameId === selectedGame?.id).map((config) => (
+                <TouchableOpacity
+                  key={config.id}
+                  style={[styles.configButton, { borderColor: colors.navDefaultIcon, backgroundColor: colors.cardBackground }]}
+                  onPress={() => handleStartGameConfig(config.id)}
+                >
+                  <Text style={[styles.configTitle, { color: colors.text }]}>{config.difficulty.toUpperCase()}</Text>
+                  <Text style={[styles.configMeta, { color: colors.navDefaultIcon }]}>Reward: {config.point} | Target: {config.targetDuration}s</Text>
+                </TouchableOpacity>
+              ))
+            )}
 
-            {selectedGame?.gamePicture ? (
-              <Image source={{ uri: selectedGame.gamePicture }} style={styles.modalImage} resizeMode="cover" />
+            {!configsLoading && selectedGame && gameConfigs.filter((config) => config.gameId === selectedGame.id).length === 0 ? (
+              <Text style={[styles.modalDescription, { color: colors.text }]}>No difficulty options available for this game.</Text>
             ) : null}
 
-            <Text style={[styles.modalDescription, { color: colors.navDefaultIcon }]}>Press start to enter the game.</Text>
-
             <View style={styles.modalActions}>
-              <Pressable style={[styles.modalSecondaryButton, { borderColor: colors.navDefaultIcon }]} onPress={() => setGameModalVisible(false)}>
+              <Pressable style={[styles.modalSecondaryButton, { borderColor: colors.navDefaultIcon }]} onPress={() => {
+                setGameModalVisible(false);
+                setSelectedGame(null);
+              }}>
                 <Text style={[styles.modalSecondaryButtonText, { color: colors.text }]}>Cancel</Text>
-              </Pressable>
-
-              <Pressable style={[styles.modalPrimaryButton, { backgroundColor: colors.primary }]} onPress={startSelectedGame}>
-                <Text style={[styles.modalPrimaryButtonText, { color: colors.text2 }]}>Start</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -495,7 +558,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.8)",
     justifyContent: "center",
     padding: 20,
   },
@@ -549,5 +612,20 @@ const styles = StyleSheet.create({
   modalPrimaryButtonText: {
     fontSize: 14,
     fontWeight: "700",
+  },
+  configButton: {
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  configTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  configMeta: {
+    fontSize: 13,
+    marginTop: 6,
   },
 });
