@@ -4,55 +4,109 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, database } from '../firebase/firebase';
 
-// initial state of the tic tac toe board
 const initialBoard = Array(9).fill(null);
+const TIMER_LIMIT = 8;
 
 const TicTacToeGame = () => {
     const startTimeRef = useRef<Date | null>(null);
     const [board, setBoard] = useState(initialBoard);
-    const [isPlayerTurn, setIsPlayerTurn] = useState(true); // true for player X, false for player O
-    const [winner, setWinner] = useState(null); // null for no winner, 'X' for player X, 'O' for player O
+    const [isPlayerTurn, setIsPlayerTurn] = useState(true); // true = 玩家 (X), false = AI (O)
+    const [winner, setWinner] = useState<string | null>(null); // 'X', 'O', 'draw', 'forfeit_player', 'forfeit_ai'
+    const [timeLeft, setTimeLeft] = useState(TIMER_LIMIT);
 
+    // Initialize the start time when the component mounts
     useEffect(() => {
         startTimeRef.current = new Date();
-        checkWinner();
-    }, [board]);
+    }, []);
 
-    //check winner
-    const checkWinner = () => {
+    // AI move and winner check effect
+    useEffect(() => {
+        const gameWinner = checkWinner(board);
+        
+        if (gameWinner) {
+            setWinner(gameWinner);
+            return;
+        }
+
+        // AI move but game is not over yet
+        if (!isPlayerTurn && !gameWinner) {
+            // AI will make a move after a short delay to simulate thinking time
+            const aiTimeout = setTimeout(() => {
+                makeAiMove();
+            }, 500);
+            return () => clearTimeout(aiTimeout);
+        }
+    }, [board, isPlayerTurn]);
+
+    // Countdown
+    useEffect(() => {
+        // If the game is over, stop the countdown
+        if (winner) return;
+
+        setTimeLeft(TIMER_LIMIT); // Reset timer each turn
+
+        const interval = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    // Time's up, determine who forfeits
+                    if (isPlayerTurn) {
+                        setWinner('forfeit_player');
+                    } else {
+                        setWinner('forfeit_ai');
+                    }
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [board, isPlayerTurn, winner]);
+
+    const checkWinner = (currentBoard: any[]) => {
         const lines = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6]
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+            [0, 4, 8], [2, 4, 6]             
         ];
 
         for (let i = 0; i < lines.length; i++) {
             const [a, b, c] = lines[i];
-
-            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                setWinner(board[a]);
-                return;
+            if (currentBoard[a] && currentBoard[a] === currentBoard[b] && currentBoard[a] === currentBoard[c]) {
+                return currentBoard[a]; // return 'X' or 'O'
             }
         }
 
-        //check for draw
-        if (board.every(square => square)) {
-            setWinner('draw');
+        if (currentBoard.every(square => square)) {
+            return 'draw';
+        }
+        return null;
+    };
+
+    // AI logic
+    const makeAiMove = () => {
+        const emptySquares = board
+            .map((square, index) => (square === null ? index : null))
+            .filter((val) => val !== null) as number[];
+
+        if (emptySquares.length > 0) {
+            const randomIndex = emptySquares[Math.floor(Math.random() * emptySquares.length)];
+            const newBoard = [...board];
+            newBoard[randomIndex] = 'O';
+            setBoard(newBoard);
+            setIsPlayerTurn(true); 
         }
     };
 
+    // Player's move
     const handleSquarePress = (index: number) => {
-        //check if the square is empty and if there is no winner yet
-        if (!board[index] && !winner) {
+        // 只有是玩家回合、格子为空、且没有胜负时才可以点
+        if (isPlayerTurn && !board[index] && !winner) {
             const newBoard = [...board];
-            newBoard[index] = isPlayerTurn ? 'X' : 'O';
+            newBoard[index] = 'X';
             setBoard(newBoard);
-            setIsPlayerTurn(!isPlayerTurn);
+            setIsPlayerTurn(false);
         }
     };
 
@@ -60,6 +114,8 @@ const TicTacToeGame = () => {
         setBoard(initialBoard);
         setIsPlayerTurn(true);
         setWinner(null);
+        setTimeLeft(TIMER_LIMIT);
+        startTimeRef.current = new Date();
     };
 
     const home = async () => {
@@ -69,9 +125,7 @@ const TicTacToeGame = () => {
         }
 
         const endTime = new Date();
-        // calculate the duration in milliseconds
         const durationMs = endTime.getTime() - startTimeRef.current.getTime();
-        // convert milliseconds to a more user-friendly format
         const totalSeconds = Math.floor(durationMs / 1000);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
@@ -80,51 +134,82 @@ const TicTacToeGame = () => {
         const user = auth.currentUser;
         if (user) {
             try {
-                // save history to Firebase Realtime Database
                 const userHistoryRef = ref(database, `user_history/${user.uid}`);
-
-                // push game data to Firebase
                 await push(userHistoryRef, {
-                    gameName: "Tic Tac Toe",
-                    startTime: startTimeRef.current.toLocaleString(), // the time when the game was played (e.g., 2026/7/2 14:30:22)
-                    duration: durationString,                         // game duration (e.g., 1 min 15 secs)
-                    createdAt: endTime.getTime()                      // timestamp for sorting purposes
+                    gameName: "Tic Tac Toe (AI)",
+                    startTime: startTimeRef.current.toLocaleString(),
+                    duration: durationString,
+                    createdAt: endTime.getTime()
                 });
-                console.log("Game history saved successfully to the database!");
+                console.log("Game history saved successfully!");
             } catch (error) {
                 console.error("Game history saved failed:", error);
             }
         }
-
         router.replace("/home");
+    };
+
+    // get dynamic result text based on the game state
+    const getResultText = () => {
+        if (winner === 'X') return "🎉 Congratulations! You beat the AI!";
+        if (winner === 'O') return "🤖 Oops, the AI won this round!";
+        if (winner === 'draw') return "🤝 It's a tie!";
+        if (winner === 'forfeit_player') return "⏰ Time's up and you didn't make a move, you lose!";
+        if (winner === 'forfeit_ai') return "🤖 The AI took too long to think, you win!";
+        return `Time left: ${timeLeft} seconds (${isPlayerTurn ? 'Your turn' : 'AI is thinking'})`;
     };
 
     return (
         <View style={styles.container}>
+            <Text style={[styles.result, winner?.includes('player') || winner === 'O' ? { color: '#FF0000' } : null]}>
+                {getResultText()}
+            </Text>
+
+            <View style={styles.animationContainer}>
+                <View style={styles.characterBox}>
+                    <Text style={styles.characterRole}>Player (X)</Text>
+                    {winner === 'X' || winner === 'forfeit_ai' ? (
+                        <Text style={[styles.emoji, styles.bounceAnimation]}>＼(￣▽￣)／ {"\n"}Jump for joy!</Text>
+                    ) : winner === 'O' || winner === 'forfeit_player' ? (
+                        <Text style={styles.emoji}>(╯😭╰) {"\n"}Sad...</Text>
+                    ) : (
+                        <Text style={styles.emoji}>(  'ω' ) {"\n"}Preparing...</Text>
+                    )}
+                </View>
+
+                <View style={styles.characterBox}>
+                    <Text style={styles.characterRole}>AI Enemy (O)</Text>
+                    {winner === 'O' || winner === 'forfeit_player' ? (
+                        <Text style={[styles.emoji, styles.bounceAnimation]}>└( 🤖 )┘ {"\n"}Jump for joy!</Text>
+                    ) : winner === 'X' || winner === 'forfeit_ai' ? (
+                        <Text style={styles.emoji}>( 🤖 💢 ) {"\n"}Sad...</Text>
+                    ) : (
+                        <Text style={styles.emoji}>[ 🤖 ] {"\n"}Calculating...</Text>
+                    )}
+                </View>
+            </View>
+
             <View style={styles.board}>
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(index => (
-                    <TouchableOpacity key={index} style={styles.square} onPress={() => handleSquarePress(index)}
-                        disabled={!!(board[index] || winner)}>
-                        <Text style={[styles.squareText, { color: board[index] === 'X' ? '#FF0000' : '#0000FF' }]}>
-                            {board[index] ? board[index].toString() : ''}
+                {board.map((value, index) => (
+                    <TouchableOpacity 
+                        key={index} 
+                        style={styles.square} 
+                        onPress={() => handleSquarePress(index)}
+                        disabled={!!(value || winner || !isPlayerTurn)}
+                    >
+                        <Text style={[styles.squareText, { color: value === 'X' ? '#FF0000' : '#0000FF' }]}>
+                            {value ? value.toString() : ''}
                         </Text>
                     </TouchableOpacity>
                 ))}
             </View>
-            <Text style={styles.result}>
-                {
-                    winner ? winner === 'draw' ? "It's a draw!" : `Player ${winner} wins!` : `Next player: ${isPlayerTurn ? 'X' : 'O'}'s turn`
-                }
-            </Text>
+
             <TouchableOpacity style={styles.button} onPress={handleResetGame}>
-                <Text style={styles.buttonText}>
-                    Reset Game
-                </Text>
+                <Text style={styles.buttonText}>Reset Game</Text>
             </TouchableOpacity>
+            
             <TouchableOpacity style={styles.button} onPress={home}>
-                <Text style={styles.buttonText}>
-                    Back to Home
-                </Text>
+                <Text style={styles.buttonText}>Back to Lobby</Text>
             </TouchableOpacity>
         </View>
     );
@@ -134,38 +219,79 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         marginTop: 30,
+        backgroundColor: '#F5F5F7',
+        justifyContent: 'center',
     },
     board: {
         flexDirection: 'row',
         justifyContent: 'center',
         flexWrap: 'wrap',
-        marginBottom: 20,
+        marginBottom: 30,
+        paddingHorizontal: 20,
     },
     square: {
         width: 100,
         height: 100,
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: '#363062',
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#FFF',
     },
     squareText: {
-        fontSize: 36,
+        fontSize: 40,
+        fontWeight: 'bold',
     },
     result: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: 20,
+        fontWeight: '700',
         textAlign: 'center',
         color: '#363062',
-        marginBottom: 20,
+        marginBottom: 15,
+        paddingHorizontal: 20,
+    },
+    animationContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 25,
+        paddingHorizontal: 10,
+    },
+    characterBox: {
+        alignItems: 'center',
+        backgroundColor: '#E9D5CA',
+        padding: 12,
+        borderRadius: 10,
+        width: '42%',
+        minHeight: 100,
+        justifyContent: 'center',
+    },
+    characterRole: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#363062',
+        marginBottom: 5,
+    },
+    emoji: {
+        fontSize: 15,
+        textAlign: 'center',
+        color: '#435585',
+        lineHeight: 22,
+    },
+    bounceAnimation: {
+        fontWeight: 'bold',
+        color: '#2d6a4f',
     },
     button: {
         backgroundColor: '#363062',
         paddingHorizontal: 40,
-        paddingVertical: 15,
+        paddingVertical: 14,
         marginHorizontal: 60,
-        borderRadius: 5,
-        marginBottom: 10,
+        borderRadius: 8,
+        marginBottom: 12,
+        elevation: 2, 
+        shadowColor: '#000', 
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
     },
     buttonText: {
         fontSize: 16,
