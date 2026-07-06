@@ -139,7 +139,7 @@ export default function Profile() {
                 Use this area for account-level actions. Logging out will require confirmation.
               </Text>
 
-              <AppButton title="L O G O U T" icon="log-out-outline" onPress={confirmLogout} />
+              <AppButton title="LOGOUT" icon="log-out-outline" onPress={confirmLogout} />
             </View>
           </View>
         )}

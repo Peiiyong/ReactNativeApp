@@ -71,7 +71,7 @@ export default function Login() {
       />
 
       <AppButton
-        title="L O G I N"
+        title="LOGIN"
         icon="log-in-outline"
         onPress={login}
       />

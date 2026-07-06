@@ -27,7 +27,7 @@ export default function AppInput({
         flexDirection: "row",
         alignItems: "center",
         borderWidth: 1,
-        borderColor: colors.text,
+        borderColor: colors.titleText,
         borderRadius: 12,
         paddingHorizontal: 12,
         marginBottom: 10,

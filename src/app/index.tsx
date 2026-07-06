@@ -1,3 +1,4 @@
+import { seedLevelConfig } from "@/firebase/level_config";
 import { router } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
@@ -10,6 +11,14 @@ export default function Splash() {
   const colors = useThemeColors();
 
   useEffect(() => {
+    // save level config to firebase database if it doesn't exist
+    const start = async () => {
+      await seedLevelConfig();
+    };
+
+    start();
+
+    // check if user is logged in or not
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setTimeout(() => {
         if (user) {

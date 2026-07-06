@@ -4,6 +4,7 @@ import "../../global.css";
 import { ThemeProvider } from "../theme/theme-provider";
 
 export default function RootLayout() {
+  // Load custom fonts
   const [fontsLoaded] = useFonts({
     Baloo2: Baloo2_700Bold,
   });
