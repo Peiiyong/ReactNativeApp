@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { auth } from "../firebase/firebase";
 import { useAppTheme } from "../theme/theme-provider";
 import { useThemeColors } from "../theme/useThemeColors";
@@ -66,158 +66,82 @@ export default function Profile() {
   const avatarLetter = email.trim().charAt(0).toUpperCase() || "U";
 
   return (
-    <LinearGradient
-      colors={colors.innerBackground}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <LinearGradient colors={colors.innerBackground} style={styles.container}>
+      <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
+
       <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 20,
-          paddingBottom: 120,
-        }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={{ color: colors.text, fontSize: 32, fontWeight: "bold", marginBottom: 20, marginTop: 10, textAlign: "center" }}>
-          Profile
-        </Text>
         {loading ? (
-          <View style={{ alignItems: "center", gap: 12 }}>
-            <Text style={{ color: colors.text, fontSize: 24, fontWeight: "bold" }}>Loading profile...</Text>
+          <View style={styles.loadingContainer}>
+            <Text style={[styles.loadingText, { color: colors.text }]}>Loading profile...</Text>
             <ActivityIndicator color={colors.text} size="large" />
           </View>
         ) : (
-          <View
-          style={{
-            width: "100%",
-            gap: 14,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.cardBackground,
-              borderRadius: 28,
-              padding: 24,
-              alignItems: "center",
-              gap: 14,
-            }}
-          >
-            <View
-              style={{
-                width: 104,
-                height: 104,
-                borderRadius: 52,
-                backgroundColor: colors.primary,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ color: colors.text2, fontSize: 38, fontWeight: "bold" }}>{avatarLetter}</Text>
+          <View style={styles.content}>
+            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+              <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.avatarText, { color: colors.text2 }]}>{avatarLetter}</Text>
+              </View>
+
+              <Text style={[styles.username, { color: colors.text }]}>{username}</Text>
+
+              <Text style={[styles.email, { color: colors.navDefaultIcon }]}>{email}</Text>
             </View>
 
-            <Text style={{ color: colors.text, fontSize: 30, fontWeight: "bold", textAlign: "center" }}>
-              {username}
-            </Text>
+            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Account Info</Text>
 
-            <Text style={{ color: colors.navDefaultIcon, fontSize: 16 }}>
-              {email}
-            </Text>
-          </View>
+              <View style={styles.infoList}>
+                <View style={styles.infoRow}>
+                  <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Username</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{username}</Text>
+                </View>
 
-          <View
-            style={{
-              backgroundColor: colors.cardBackground,
-              borderRadius: 24,
-              padding: 20,
-              gap: 16,
-            }}
-          >
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: "bold" }}>
-              Account Info
-            </Text>
+                <View style={styles.infoRow}>
+                  <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Email</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{email}</Text>
+                </View>
 
-            <View style={{ gap: 12 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 16 }}>
-                <Text style={{ color: colors.navDefaultIcon, fontSize: 14 }}>Username</Text>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600", textAlign: "right", flex: 1 }}>
-                  {username}
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 16 }}>
-                <Text style={{ color: colors.navDefaultIcon, fontSize: 14 }}>Email</Text>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600", textAlign: "right", flex: 1 }}>
-                  {email}
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 16 }}>
-                <Text style={{ color: colors.navDefaultIcon, fontSize: 14 }}>Registered</Text>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600", textAlign: "right", flex: 1 }}>
-                  {registeredAt}
-                </Text>
+                <View style={styles.infoRow}>
+                  <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Registered</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{registeredAt}</Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          <View
-            style={{
-              backgroundColor: colors.cardBackground,
-              borderRadius: 24,
-              padding: 20,
-              gap: 14,
-            }}
-          >
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: "bold" }}>
-              Settings
-            </Text>
+            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
 
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingVertical: 8,
-              }}
-            >
-              <View style={{ flex: 1, paddingRight: 16 }}>
-                <Text style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}>Theme mode</Text>
-                <Text style={{ color: colors.navDefaultIcon, fontSize: 13 }}>
-                  {themeMode === "dark" ? "Dark mode enabled" : "Light mode enabled"}
-                </Text>
+              <View style={styles.settingRow}>
+                <View style={styles.settingTextWrap}>
+                  <Text style={[styles.settingTitle, { color: colors.text }]}>Theme mode</Text>
+                  <Text style={[styles.settingSubtitle, { color: colors.navDefaultIcon }]}> 
+                    {themeMode === "dark" ? "Dark mode enabled" : "Light mode enabled"}
+                  </Text>
+                </View>
+
+                <Switch
+                  value={themeMode === "dark"}
+                  onValueChange={toggleThemeMode}
+                  trackColor={{ false: "#94A3B8", true: colors.primary }}
+                  thumbColor={themeMode === "dark" ? "#FFFFFF" : "#F8FAFC"}
+                />
               </View>
+            </View>
 
-              <Switch
-                value={themeMode === "dark"}
-                onValueChange={toggleThemeMode}
-                trackColor={{ false: "#94A3B8", true: colors.primary }}
-                thumbColor={themeMode === "dark" ? "#FFFFFF" : "#F8FAFC"}
-              />
+            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Security Actions</Text>
+
+              <Text style={[styles.sectionDescription, { color: colors.navDefaultIcon }]}> 
+                Use this area for account-level actions. Logging out will require confirmation.
+              </Text>
+
+              <AppButton title="L O G O U T" icon="log-out-outline" onPress={confirmLogout} />
             </View>
           </View>
-
-          <View
-            style={{
-              backgroundColor: colors.cardBackground,
-              borderRadius: 24,
-              padding: 20,
-              gap: 14,
-            }}
-          >
-            <Text style={{ color: colors.text, fontSize: 18, fontWeight: "bold" }}>
-              Security Actions
-            </Text>
-
-            <Text style={{ color: colors.navDefaultIcon, fontSize: 13, lineHeight: 18 }}>
-              Use this area for account-level actions. Logging out will require confirmation.
-            </Text>
-
-            <AppButton title="L O G O U T" icon="log-out-outline" onPress={confirmLogout} />
-          </View>
-        </View>
         )}
       </ScrollView>
 
@@ -225,3 +149,105 @@ export default function Profile() {
     </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 60,
+    marginBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 120,
+  },
+  loadingContainer: {
+    flex: 1,
+    minHeight: 280,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  content: {
+    gap: 14,
+  },
+  card: {
+    borderRadius: 24,
+    padding: 20,
+    gap: 14,
+  },
+  avatar: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+  },
+  avatarText: {
+    fontSize: 38,
+    fontWeight: "bold",
+  },
+  username: {
+    fontSize: 30,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  email: {
+    fontSize: 16,
+    textAlign: "center",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  infoList: {
+    gap: 12,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  infoLabel: {
+    fontSize: 14,
+  },
+  infoValue: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "right",
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  settingTextWrap: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  settingSubtitle: {
+    fontSize: 13,
+  },
+  sectionDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+});

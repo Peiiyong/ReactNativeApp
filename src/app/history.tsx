@@ -50,7 +50,7 @@ export default function History() {
 
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
-      
+
       <Text style={[styles.title, { color: colors.text }]}>Game History</Text>
 
       {loading ? (
@@ -68,14 +68,17 @@ export default function History() {
           style={styles.list}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <View style={[styles.card, { backgroundColor: "rgba(255, 255, 255, 0.12)" }]}>
+            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}> 
               <View style={styles.cardHeader}>
                 <Text style={[styles.gameName, { color: colors.text }]}>{item.gameName}</Text>
-                <Text style={styles.durationBadge}>{item.duration}</Text>
+                <Text style={[styles.durationBadge, { backgroundColor: colors.primary, color: colors.text2 }]}>
+                  {item.duration}
+                </Text>
               </View>
-              <Text style={[styles.timeText, { color: colors.text }]}>
-                Start time: {item.startTime}
-              </Text>
+
+       
+                  <Text style={[styles.timeText, { color: colors.navDefaultIcon }]}>Start time: {item.startTime}</Text>
+    
             </View>
           )}
         />
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
-    marginTop: 60, 
+    marginTop: 60,
     marginBottom: 20,
   },
   centerContainer: {
@@ -103,39 +106,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  emptyText: {
+    fontSize: 16,
+    opacity: 0.6,
+  },
   list: {
-    flex: 1, 
+    flex: 1,
     width: "100%",
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100, 
+    paddingBottom: 120,
   },
   card: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 14, 
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 14,
+    gap: 14,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
+    alignItems: "flex-start",
+    gap: 12,
   },
   gameName: {
     fontSize: 18,
     fontWeight: "bold",
   },
   durationBadge: {
-    backgroundColor: "#4CAF50",
-    color: "#fff",
+    overflow: "hidden",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -145,5 +145,22 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 13,
     opacity: 0.8,
+  },
+  cardBody: {
+    gap: 10,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  infoLabel: {
+    fontSize: 14,
+  },
+  infoValue: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "right",
   },
 });

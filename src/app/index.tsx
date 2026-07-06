@@ -1,13 +1,14 @@
 import { router } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { View } from "react-native";
+import Animated, { FadeIn, FadeOut, SlideInRight } from "react-native-reanimated";
 import { auth } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
 export default function Splash() {
   const colors = useThemeColors();
-  
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setTimeout(() => {
@@ -16,18 +17,37 @@ export default function Splash() {
         } else {
           router.replace("/login");
         }
-      }, 2000); 
+      }, 3500);
     });
 
     return unsubscribe;
   }, []);
 
+  const title = "GAMEVERSE";
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-      <Text style={{ fontSize: 28, fontWeight: "bold", color: colors.text, fontFamily: "Righteous", marginBottom: 10 }}>
+    <Animated.View
+      entering={FadeIn.duration(600)}
+      exiting={FadeOut.duration(500)}
+      style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center", }}
+    >
+      <View style={{ flexDirection: "row" }}>
+        {title.split("").map((letter, index) => (
+          <Animated.Text
+            key={index}
+            entering={SlideInRight.delay(index * 120)}
+            style={[{ fontSize:  50, fontFamily: "Baloo2", color: colors.titleText, textShadowColor: colors.titleTextShadow, textShadowRadius: 30, }]}
+          >
+            {letter}
+          </Animated.Text>
+        ))}
+      </View>
+
+      <Animated.Text
+        entering={FadeIn.delay(2600)}
+        style={[{ fontSize:  18, fontFamily: "Baloo2", marginTop: 40, color: colors.titleText }]}
+      >
         Loading...
-      </Text>
-      <ActivityIndicator size="large" color={colors.text} />
-    </View>
+      </Animated.Text>
+    </Animated.View>
   );
 }

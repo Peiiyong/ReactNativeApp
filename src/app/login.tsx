@@ -53,7 +53,7 @@ export default function Login() {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", padding: 20, gap: 10, backgroundColor: colors.background }}>
-      <Text style={{ fontSize: 50, fontWeight: "bold", color: colors.text, fontFamily: "Righteous", marginBottom: 30, textAlign: "center" }}>L O G I N</Text>
+      <Text style={{ fontSize: 50, fontWeight: "bold", color: colors.text, fontFamily: "Baloo2", marginBottom: 30, textAlign: "center" }}>L O G I N</Text>
 
       <AppInput
         placeholder="Email"

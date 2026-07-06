@@ -5,7 +5,9 @@ export const Colors = {
     navBackground: "#FFFFFF",
     cardBackground: "rgba(255,255,255,0.75)",
 
-    text: "#0F172A",
+    titleText: "#FFC300",
+    titleTextShadow: "#FFF44F",
+    text: "#2a290f",
     text2: "#FFFFFF",
     buttonGradient: ["#2563EB", "#4F46E5", "#7C3AED"] as const,
     navDefaultIcon: "#64748B",
@@ -22,6 +24,8 @@ export const Colors = {
     navBackground: "#1b1b1b",
     cardBackground: "rgba(15,23,42,0.7)",
 
+    titleText: "#ffffff",
+    titleTextShadow: "#b06cf0",
     text: "#FFFFFF",
     text2: "#FFFFFF",
     buttonGradient: ["#b06cf0", "#7e46d7", "#9333EA"] as const,
