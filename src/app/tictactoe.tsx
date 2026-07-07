@@ -11,7 +11,7 @@ const TIMER_LIMIT = 8; // countdown timer limit in seconds
 
 const TicTacToeGame = () => {
     const colors = useThemeColors();
-    const { gameConfigId} = useLocalSearchParams<{
+    const { gameConfigId } = useLocalSearchParams<{
         gameConfigId: string;
     }>();
     const configId = gameConfigId || '1';
@@ -26,23 +26,34 @@ const TicTacToeGame = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     const hasSavedHistory = useRef(false);
+    const [secondsLeft, setSecondsLeft] = useState<number>(60);
+    const [isTimerActive, setIsTimerActive] = useState<boolean>(true);
 
     useEffect(() => {
         startTimeRef.current = new Date();
     }, []);
 
     // phone back button handling for mid-game exit
+    // phone back button handling for mid-game exit
     useEffect(() => {
         const onBackPress = () => {
             if (!winner) {
+                // stop countdown
+                setIsTimerActive(false);
+
                 // alert to confirm mid-game exit
                 Alert.alert(
                     "Exit Match?",
                     "Are you sure you want to quit this match? It will be recorded as a Loss, and no points will be rewarded.",
                     [
-                        { text: "Stay & Play", style: "cancel" },
+                        {
+                            text: "Stay & Play",
+                            style: "cancel",
+                            onPress: () => setIsTimerActive(true)
+                        },
                         { text: "Quit Game", style: "destructive", onPress: () => handleMidGameQuit() }
-                    ]
+                    ],
+                    { cancelable: false }
                 );
                 return true; // successfully handled the back button press
             }
@@ -62,10 +73,11 @@ const TicTacToeGame = () => {
             if (snapshot.exists()) {
                 const configData = snapshot.val();
                 console.log("成功从 Firebase 实时加载游戏配置:", configData);
-                
+
                 if (configData.point !== undefined) {
                     setGamePoints(Number(configData.point));
                 }
+                setSecondsLeft(configData.targetDuration);
             } else {
                 console.warn(`❌ 未在数据库中找到 game_config/${configId} 的配置`);
             }
@@ -101,9 +113,14 @@ const TicTacToeGame = () => {
 
     // countdown timer logic
     useEffect(() => {
-        if (winner) return;
+        if (!winner) {
+            setTimeLeft(TIMER_LIMIT);
+        }
+    }, [isPlayerTurn]);
 
-        setTimeLeft(TIMER_LIMIT);
+    useEffect(() => {
+        // if the game has ended or the timer is paused, do not start a new interval
+        if (winner || !isTimerActive) return;
 
         const interval = setInterval(() => {
             setTimeLeft((prev) => {
@@ -119,7 +136,7 @@ const TicTacToeGame = () => {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isPlayerTurn, winner]);
+    }, [isPlayerTurn, winner, isTimerActive]);
 
     const checkWinner = (currentBoard: any[]) => {
         const lines = [
@@ -196,13 +213,13 @@ const TicTacToeGame = () => {
         } else {
             if (finalWinner === 'X' || finalWinner === 'forfeit_ai') {
                 gameStatus = 'win';
-                earnedPoints = gamePoints; 
+                earnedPoints = gamePoints;
             } else if (finalWinner === 'O' || finalWinner === 'forfeit_player') {
                 gameStatus = 'lose';
-                earnedPoints = 0; 
+                earnedPoints = 0;
             } else {
                 gameStatus = 'draw';
-                earnedPoints = 0; 
+                earnedPoints = 0;
             }
         }
 
@@ -226,7 +243,7 @@ const TicTacToeGame = () => {
                 }
             }
 
-            const historyRef = ref(database, `user_history/${realUserId}`); 
+            const historyRef = ref(database, `user_history/${realUserId}`);
             await push(historyRef, {
                 gameConfigId: configId,
                 gameStatus: gameStatus,
@@ -330,10 +347,22 @@ const TicTacToeGame = () => {
                     style={[styles.secondaryBtn, { backgroundColor: colors.cardBackground, borderColor: colors.navDefaultIcon }]}
                     onPress={() => {
                         if (!winner) {
-                            Alert.alert("Exit Match?", "Quit now? It will be recorded as a Lose.", [
-                                { text: "Stay", style: "cancel" },
-                                { text: "Quit", style: "destructive", onPress: () => handleMidGameQuit() }
-                            ]);
+                            setIsTimerActive(false);
+
+                            Alert.alert(
+                                "Exit Match?",
+                                "Quit now? It will be recorded as a Lose.",
+                                [
+                                    {
+                                        text: "Stay",
+                                        style: "cancel",
+                                        // continue countdown if user decides to stay
+                                        onPress: () => setIsTimerActive(true)
+                                    },
+                                    { text: "Quit", style: "destructive", onPress: () => handleMidGameQuit() }
+                                ],
+                                { cancelable: false }
+                            );
                         } else {
                             router.replace('/home');
                         }
