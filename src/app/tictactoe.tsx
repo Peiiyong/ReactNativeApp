@@ -361,7 +361,7 @@ const TicTacToeGame = () => {
                                     },
                                     { text: "Quit", style: "destructive", onPress: () => handleMidGameQuit() }
                                 ],
-                                { cancelable: false }
+                                { cancelable: false } // to prevent dismissing the alert by tapping outside
                             );
                         } else {
                             router.replace('/home');
