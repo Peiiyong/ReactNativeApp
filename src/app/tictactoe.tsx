@@ -1,8 +1,8 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { push, ref, get, update } from 'firebase/database';
-import { useEffect, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator, BackHandler } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { get, push, ref, update } from 'firebase/database';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, BackHandler, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, database } from '../firebase/firebase';
 import { useThemeColors } from '../theme/useThemeColors';
 
@@ -11,9 +11,12 @@ const TIMER_LIMIT = 8; // countdown timer limit in seconds
 
 const TicTacToeGame = () => {
     const colors = useThemeColors();
-    const { gameConfigId, point } = useLocalSearchParams<{ gameConfigId: string; point: string }>();
-    const gamePoints = parseInt(point || '10', 10);
-    const configId = gameConfigId || 'default_config_id';
+    const { gameConfigId} = useLocalSearchParams<{
+        gameConfigId: string;
+    }>();
+    const configId = gameConfigId || '1';
+
+    const [gamePoints, setGamePoints] = useState<number>(0);
 
     const startTimeRef = useRef<Date | null>(null);
     const [board, setBoard] = useState(initialBoard);
@@ -50,6 +53,26 @@ const TicTacToeGame = () => {
 
         return () => subscription.remove();
     }, [winner, board, isPlayerTurn]);
+
+    useEffect(() => {
+        if (!configId) return;
+
+        const configRef = ref(database, `game_config/${configId}`);
+        get(configRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                const configData = snapshot.val();
+                console.log("成功从 Firebase 实时加载游戏配置:", configData);
+                
+                if (configData.point !== undefined) {
+                    setGamePoints(Number(configData.point));
+                }
+            } else {
+                console.warn(`❌ 未在数据库中找到 game_config/${configId} 的配置`);
+            }
+        }).catch((err) => {
+            console.error("加载 Firebase 游戏配置失败:", err);
+        });
+    }, [configId]);
 
     // quick mid-game quit handler
     const handleMidGameQuit = async () => {
@@ -149,23 +172,37 @@ const TicTacToeGame = () => {
             return;
         }
 
+        let realUserId = user.uid;
+        try {
+            const usersRef = ref(database, "users");
+            const usersSnapshot = await get(usersRef);
+            if (usersSnapshot.exists()) {
+                const usersData = usersSnapshot.val();
+                const foundKey = Object.keys(usersData).find(
+                    (key) => usersData[key].authUid === user.uid || key === user.uid
+                );
+                if (foundKey) realUserId = foundKey;
+            }
+        } catch (idError) {
+            console.error("Failed to map custom realUserId:", idError);
+        }
+
         let gameStatus: 'win' | 'lose' | 'draw' = 'draw';
         let earnedPoints = 0;
 
-        // Determine game status and points based on the final winner and whether it was a forfeit quit
         if (isForfeitQuit) {
             gameStatus = 'lose';
             earnedPoints = 0;
         } else {
             if (finalWinner === 'X' || finalWinner === 'forfeit_ai') {
                 gameStatus = 'win';
-                earnedPoints = gamePoints; // win and earn points
+                earnedPoints = gamePoints; 
             } else if (finalWinner === 'O' || finalWinner === 'forfeit_player') {
                 gameStatus = 'lose';
-                earnedPoints = 0; // lose and earn no points
+                earnedPoints = 0; 
             } else {
                 gameStatus = 'draw';
-                earnedPoints = 0; // draw and earn no points
+                earnedPoints = 0; 
             }
         }
 
@@ -177,9 +214,8 @@ const TicTacToeGame = () => {
         const durationString = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 
         try {
-            // update user points in the database if the player won
             if (gameStatus === 'win' && earnedPoints > 0) {
-                const userRef = ref(database, `users/${user.uid}`);
+                const userRef = ref(database, `users/${realUserId}`);
                 const snapshot = await get(userRef);
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
@@ -190,8 +226,7 @@ const TicTacToeGame = () => {
                 }
             }
 
-            // user game history
-            const historyRef = ref(database, `user_history/${user.uid}`);
+            const historyRef = ref(database, `user_history/${realUserId}`); 
             await push(historyRef, {
                 gameConfigId: configId,
                 gameStatus: gameStatus,
@@ -200,9 +235,8 @@ const TicTacToeGame = () => {
                 createdAt: endTime.getTime()
             });
 
-            console.log("Match telemetry reported successfully.");
+            console.log(`Match telemetry reported with points: ${earnedPoints}`);
 
-            // continue?
             if (!isForfeitQuit) {
                 setTimeout(() => {
                     Alert.alert(
@@ -212,7 +246,7 @@ const TicTacToeGame = () => {
                             { text: "No, Back Home", style: "cancel", onPress: () => router.replace('/home') },
                             { text: "Play Again", onPress: () => handleResetGame() }
                         ],
-                        { cancelable: false } // force the user to make a choice
+                        { cancelable: false }
                     );
                 }, 500);
             }
@@ -244,10 +278,10 @@ const TicTacToeGame = () => {
 
     return (
         <LinearGradient colors={colors.innerBackground} style={styles.container}>
-            <View style={[styles.statusCard, { backgroundColor: colors.cardBackground }]}> 
+            <View style={[styles.statusCard, { backgroundColor: colors.cardBackground }]}>
                 <Text style={[styles.resultText, { color: colors.text }]}>{getResultText()}</Text>
                 {!winner && (
-                    <View style={[styles.timerContainer, { backgroundColor: colors.background }]}> 
+                    <View style={[styles.timerContainer, { backgroundColor: colors.background }]}>
                         <Text style={[styles.timerText, timeLeft <= 3 ? styles.timerUrgent : null, { color: timeLeft <= 3 ? '#EF4444' : colors.successMsg }]}>
                             {timeLeft}s
                         </Text>
@@ -273,7 +307,7 @@ const TicTacToeGame = () => {
                 </View>
             </View>
 
-            <View style={[styles.boardCard, { backgroundColor: colors.cardBackground }]}> 
+            <View style={[styles.boardCard, { backgroundColor: colors.cardBackground }]}>
                 <View style={styles.board}>
                     {board.map((value, index) => (
                         <TouchableOpacity
@@ -292,12 +326,11 @@ const TicTacToeGame = () => {
             </View>
 
             <View style={styles.actionArea}>
-                {/* 游戏中点击此按钮同样执行安全平局退出逻辑 */}
                 <TouchableOpacity
                     style={[styles.secondaryBtn, { backgroundColor: colors.cardBackground, borderColor: colors.navDefaultIcon }]}
                     onPress={() => {
                         if (!winner) {
-                            Alert.alert("Exit Match?", "Quit now? It will be recorded as a Draw.", [
+                            Alert.alert("Exit Match?", "Quit now? It will be recorded as a Lose.", [
                                 { text: "Stay", style: "cancel" },
                                 { text: "Quit", style: "destructive", onPress: () => handleMidGameQuit() }
                             ]);
@@ -307,10 +340,10 @@ const TicTacToeGame = () => {
                     }}
                     disabled={isSaving}
                 >
-                    {isSaving ? <ActivityIndicator color={colors.primary} size="small" /> : <Text style={[styles.secondaryBtnText, { color: colors.text } ]}>Back to Lobby</Text>}
+                    {isSaving ? <ActivityIndicator color={colors.primary} size="small" /> : <Text style={[styles.secondaryBtnText, { color: colors.text }]}>Back to Lobby</Text>}
                 </TouchableOpacity>
             </View>
-    </LinearGradient>
+        </LinearGradient>
     );
 };
 

@@ -29,7 +29,7 @@ export default function DifficultyScreen() {
         const filteredConfigs = Object.keys(data)
           .map((key) => ({ id: key, ...data[key] }))
           .filter((config) => config.gameId === gameId);
-        
+
         setConfigs(filteredConfigs);
       }
       setLoading(false);
@@ -39,10 +39,11 @@ export default function DifficultyScreen() {
   }, [gameId]);
 
   const handleStartGame = (gameConfigId: string) => {
-    // navigate to the game screen and pass the selected configuration ID
     router.push({
       pathname: "/tictactoe",
-      params: { gameConfigId: gameConfigId }
+      params: {
+        gameConfigId: gameConfigId,
+      }
     });
   };
 
@@ -94,8 +95,8 @@ export default function DifficultyScreen() {
       </View>
 
       <View style={{ height: 20 }} />
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         onPress={() => router.replace("/home")}
         style={{ padding: 10 }}
       >
