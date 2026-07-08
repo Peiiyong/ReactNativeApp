@@ -226,11 +226,11 @@ export default function Profile() {
                   <Text style={[styles.infoValue, { color: colors.text }]}>{registeredAt}</Text>
                 </View>
                 <View style={styles.statsRow}>
-                  <View style={styles.statsItem}>
+                  <View style={[styles.statsItem, { backgroundColor: colors.cardBackground, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
                     <Text style={[styles.statsLabel, { color: colors.navDefaultIcon }]}>Level</Text>
                     <Text style={[styles.statsValue, { color: colors.text }]}>{level}</Text>
                   </View>
-                  <View style={styles.statsItem}>
+                  <View style={[styles.statsItem, { backgroundColor: colors.cardBackground, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
                     <Text style={[styles.statsLabel, { color: colors.navDefaultIcon }]}>Exp</Text>
                     <Text style={[styles.statsValue, { color: colors.text }]}>{exp}</Text>
                   </View>
@@ -381,7 +381,6 @@ const styles = StyleSheet.create({
   },
   statsItem: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.08)",
     borderRadius: 12,
     padding: 12,
     alignItems: "center",
