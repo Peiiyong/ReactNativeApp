@@ -1,7 +1,8 @@
+import AppBox from "@/components/AppBox";
 import AppButton from "@/components/AppButton";
-import AppCard from "@/components/AppCard";
 import AppHeader from "@/components/AppHeader";
 import BottomNavBar from "@/components/BottomNavBar";
+import LevelProgressBar from "@/components/LevelProgressBar";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import Toast from "@/components/Toast";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +17,8 @@ import { auth, database } from "../firebase/firebase";
 import { useAppTheme } from "../theme/theme-provider";
 import { useThemeColors } from "../theme/useThemeColors";
 
-const formatJoinedDate = (timestamp?: number | string) => {
+// Function to change Date format 
+function formatJoinedDate(timestamp?: number | string) {
   if (!timestamp) return "";
   const date = typeof timestamp === "number" ? new Date(timestamp) : new Date(timestamp);
 
@@ -25,17 +27,21 @@ const formatJoinedDate = (timestamp?: number | string) => {
     month: "2-digit",
     day: "2-digit",
   });
-};
+}
 
 export default function Profile() {
   const colors = useThemeColors();
   const { themeMode, toggleThemeMode } = useAppTheme();
+
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [registeredAt, setRegisteredAt] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const [currentPoints, setCurrentPoints] = useState(0);
   const [level, setLevel] = useState(1);
   const [exp, setExp] = useState(0);
+
+  const MAX_BADGE_LEVEL = 5;
   const [loading, setLoading] = useState(true);
   const [userKey, setUserKey] = useState<string | null>(null);
 
@@ -54,12 +60,33 @@ export default function Profile() {
     setToast({ visible:true, message, type, });
   };
 
-  // Calculate how much EXP the user has gained compared to the EXP required for the next level
-  // Convert it into a percentage value for displaying the progress bar
-  // Math.min() ensures progress < 100%
-  const nextLevelExp = level * 100;
-  const progress = Math.min( (exp / nextLevelExp) * 100, 100);  
-  
+  // Get the data from level_config
+  const [nextLevelExp, setNextLevelExp] = useState(0);
+  useEffect(() => {
+    const loadLevelConfig = async () => {
+      const levelConfigRef = ref(database, "level_config");
+      const levelSnapshot = await get(levelConfigRef);
+
+      if(levelSnapshot.exists()){
+        type LevelConfigItem = {
+          level: number;
+          requiredPoint: number;
+        };
+
+        const configs = levelSnapshot.val() as Record<string, LevelConfigItem>;
+        const nextLevel = Object.values(configs).find(
+          (item) => item.level === level + 1
+        );
+
+        if(nextLevel){
+          setNextLevelExp(nextLevel.requiredPoint);
+        } else {
+          setNextLevelExp(0);
+        }
+      }
+    };
+    loadLevelConfig();
+  }, [level]);
 
   const loadUserProfile = useCallback(async () => {
     setLoading(true);
@@ -85,6 +112,7 @@ export default function Profile() {
           setUserKey(matchingKey);
           setUsername(userData.userName ?? userData.username ?? user.displayName ?? user.email?.split("@")[0] ?? "User");
           setLevel(userData.level ?? 1);
+          setCurrentPoints(userData.currentPoints ?? 0);
           setExp(userData.exp ?? 0);
           setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
           setEmail(userData.email ?? user.email ?? "No email available");
@@ -101,6 +129,7 @@ export default function Profile() {
             setUserKey(user.uid);
             setUsername(userData.userName ?? userData.username ?? user.displayName ?? user.email?.split("@")[0] ?? "User");
             setLevel(userData.level ?? 1);
+            setCurrentPoints(userData.currentPoints ?? 0);
             setExp(userData.exp ?? 0);
             setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
             setEmail(userData.email ?? user.email ?? "No email available");
@@ -120,6 +149,7 @@ export default function Profile() {
           setUserKey(user.uid);
           setUsername(userData.userName ?? userData.username ?? user.displayName ?? user.email?.split("@")[0] ?? "User");
           setLevel(userData.level ?? 1);
+          setCurrentPoints(userData.currentPoints ?? 0);
           setExp(userData.exp ?? 0);
           setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
           setEmail(userData.email ?? user.email ?? "No email available");
@@ -179,8 +209,6 @@ export default function Profile() {
     ]);
   };
 
-  const avatarLetter = email.trim().charAt(0).toUpperCase() || "U";
-
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
       <AppHeader 
@@ -201,38 +229,27 @@ export default function Profile() {
           /* DELETE */
           <View style={styles.content}> 
 
-          {/* Avatar */}
           <View style={styles.avatarSection}>
+            {/* Avatar */}
             <ProfileAvatar
               imageUri={profilePictureUrl}
               username={username}
               size={180}
-              badgeIcon={level > 5 ? "trophy" : "star"}
+              badgeIcon={level > MAX_BADGE_LEVEL ? "trophy" : "star"}
               badgeText={`Lv.${level}`}
             />
+            {/* Username */}
             <Text style={[styles.username, { color:colors.text }]}> {username} </Text>
-          </View>
 
-          {/* Level Bar */}
-          <AppCard>
-            <View style={styles.levelHeader}>
-              <Text style={[styles.sectionTitle,{color:colors.text}]}> Level {level}</Text>
-              <Text style={[styles.expText,{color:colors.navDefaultIcon}]}> {exp} / {nextLevelExp} EXP</Text>
+            {/* Level Progress */}
+            <LevelProgressBar level={level} currentExp={exp} nextLevelExp={nextLevelExp}/>
+
+            {/* Box */}
+            <View style={styles.statsRow}>
+              <AppBox label="Point" value={currentPoints} backgroundColor= {colors.boxYellow} borderColor={colors.boxYellowBorder} />
+              <AppBox label="Rank" value={level >= MAX_BADGE_LEVEL ? "🏆" : "⭐"} backgroundColor={colors.boxGreen} borderColor={colors.boxGreenBorder}/>
             </View>
-            <View style={styles.progressBackground}>
-              <View style={[ styles.progressFill, { width:`${progress}%`, backgroundColor:colors.buttonGradient[0]}]}/>
-            </View>
-            <Text
-              style={[
-                styles.remainingText,
-                {
-                  color:colors.navDefaultIcon
-                }
-              ]}
-            >
-              {nextLevelExp - exp} EXP to Level {level + 1}
-            </Text>
-          </AppCard>
+          </View>
 
             <View style={[styles.card, { backgroundColor: colors.primary }]}> 
               <View style={styles.cardHeader}>
@@ -344,7 +361,7 @@ const styles = StyleSheet.create({
 
   avatarSection:{
    alignItems: "center",
-   gap: 10,
+   gap: 5,
   },
 
   username:{
@@ -353,9 +370,87 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  content: {
-    gap: 14,
-  },
+
+
+
+levelHeader:{
+  flexDirection:"row",
+  justifyContent:"space-between",
+  alignItems:"center",
+  marginBottom:8,
+},
+
+
+
+levelInfo:{
+  width:"100%",
+  flexDirection:"row",
+  justifyContent:"space-between",
+  alignItems:"center",
+  marginBottom:6,
+},
+
+
+levelText:{
+  fontSize:18,
+  fontWeight:"700",
+  fontFamily:"Baloo2",
+},
+
+
+expText:{
+  fontSize:13,
+  fontWeight:"600",
+},
+
+
+progressBackground:{
+  width:"100%",
+  height:10,
+  borderRadius:10,
+  backgroundColor:"#CBD5E1",
+  overflow:"hidden",
+},
+
+progressContainer:{
+  width:"85%",
+  height:28,
+  borderRadius:14,
+  backgroundColor:"#CBD5E1",
+  overflow:"hidden",
+  justifyContent:"center",
+},
+
+
+progressFill:{
+  position:"absolute",
+  left:0,
+  top:0,
+  bottom:0,
+  borderRadius:14,
+},
+
+
+progressTextContainer:{
+  flexDirection:"row",
+  justifyContent:"space-between",
+  paddingHorizontal:12,
+},
+
+
+progressText:{
+  color:"#FFFFFF",
+  fontSize:13,
+  fontWeight:"700",
+  fontFamily:"Baloo2",
+},
+
+
+remainingText:{
+  marginTop:5,
+  fontSize:12,
+},
+content: {gap:16},
   card: {
     borderRadius: 24,
     padding: 20,
@@ -455,35 +550,4 @@ const styles = StyleSheet.create({
   settingSubtitle: {
     fontSize: 13,
   },
-
-  levelHeader:{
-  flexDirection:"row",
-  justifyContent:"space-between",
-  alignItems:"center",
-},
-
-
-expText:{
-  fontSize:14,
-  fontWeight:"600",
-},
-
-
-progressBackground:{
-  height:14,
-  borderRadius:10,
-  backgroundColor:"#CBD5E1",
-  overflow:"hidden",
-},
-
-
-progressFill:{
-  height:"100%",
-  borderRadius:10,
-},
-
-
-remainingText:{
-  fontSize:13,
-}
 });

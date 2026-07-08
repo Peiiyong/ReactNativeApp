@@ -10,7 +10,9 @@ export const Colors = {
     titleTextShadow: "#FFF44F",
     text: "#2a290f",
     text2: "#FFFFFF",
+    text3: "#000000",
     buttonGradient: ["#2563EB", "#4F46E5", "#7C3AED"] as const,
+    progressBarDefaultColor: "#CBD5E1",
 
     // bottom nav bar
     navBackground: "#FFFFFF",
@@ -18,6 +20,20 @@ export const Colors = {
     activeIcon: "#FFFFFF",
     activeIconBackground: "#1a58df",
     activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
+
+    // box color
+    boxBlue: "#1E3A8A",
+    boxBlueBorder: "#60A5FA",
+    boxPurple: "#4C1D95",
+    boxPurpleBorder: "#A855F7",
+    boxGreen: "#14532D",
+    boxGreenBorder: "#22C55E",
+    boxOrange: "#F97316",
+    boxOrangeBorder: "#7C2D12",
+    boxYellow: "#F59E0B",
+    boxYellowBorder: "#EAB308",
+    boxPink: "#831843",
+    boxPinkBorder: "#EC4899",
 
     // toast msg
     errorMsg: "#EF4444",
@@ -37,7 +53,9 @@ export const Colors = {
     titleTextShadow: "#b06cf0",
     text: "#FFFFFF",
     text2: "#FFFFFF",
+    text3: "#000000",
     buttonGradient: ["#b06cf0", "#7e46d7", "#9333EA"] as const,
+    progressBarDefaultColor: "#CBD5E1",
 
     //bottom nav bar
     navBackground: "#1e293b",
@@ -45,6 +63,20 @@ export const Colors = {
     activeIcon: "#FFFFFF",
     activeIconBackground: "#781bcf",
     activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
+
+    // box color
+    boxBlue: "#1E3A8A",
+    boxBlueBorder: "#60A5FA",
+    boxPurple: "#4C1D95",
+    boxPurpleBorder: "#A855F7",
+    boxGreen: "#14532D",
+    boxGreenBorder: "#22C55E",
+    boxOrange: "#7C2D12",
+    boxOrangeBorder: "#F97316",
+    boxYellow: "#F59E0B",
+    boxYellowBorder: "#EAB308",
+    boxPink: "#831843",
+    boxPinkBorder: "#EC4899",
     
     // toast msg
     errorMsg: "#EF4444",
