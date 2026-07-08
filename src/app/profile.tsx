@@ -187,7 +187,7 @@ export default function Profile() {
           </View>
         ) : (
           <View style={styles.content}>
-            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>              
+            <View style={[styles.card, { backgroundColor: colors.primary }]}>              
               {profilePictureUrl ? (
                 <Image source={{ uri: profilePictureUrl }} style={styles.profileImage} />
               ) : (
@@ -200,7 +200,7 @@ export default function Profile() {
               <Text style={[styles.email, { color: colors.navDefaultIcon }]}>{email}</Text>
             </View>
 
-            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}> 
+            <View style={[styles.card, { backgroundColor: colors.primary }]}> 
               <View style={styles.cardHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Account Info</Text>
                 <Pressable style={styles.iconButton} onPress={handleEditUsername}>
@@ -221,18 +221,18 @@ export default function Profile() {
                   <Text style={[styles.infoValue, { color: colors.text }]}>{registeredAt}</Text>
                 </View>
                 <View style={styles.statsRow}>
-                  <View style={[styles.statsItem, { backgroundColor: colors.cardBackground, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
+                  <View style={[styles.statsItem, { backgroundColor: colors.primary, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
                     <Text style={[styles.statsLabel, { color: colors.navDefaultIcon }]}>Level</Text>
                     <Text style={[styles.statsValue, { color: colors.text }]}>{level}</Text>
                   </View>
-                  <View style={[styles.statsItem, { backgroundColor: colors.cardBackground, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
+                  <View style={[styles.statsItem, { backgroundColor: colors.primary, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
                     <Text style={[styles.statsLabel, { color: colors.navDefaultIcon }]}>Exp</Text>
                     <Text style={[styles.statsValue, { color: colors.text }]}>{exp}</Text>
                   </View>
                 </View>
               </View>
             </View>
-            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+            <View style={[styles.card, { backgroundColor: colors.primary }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
 
               <View style={styles.settingRow}>
@@ -252,7 +252,7 @@ export default function Profile() {
               </View>
             </View>
 
-            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}> 
+            <View style={[styles.card, { backgroundColor: colors.primary }]}> 
               <View style={styles.cardHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Security</Text>
                 <Pressable style={styles.iconButton} onPress={handleChangePassword}>
