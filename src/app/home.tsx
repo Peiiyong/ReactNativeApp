@@ -169,11 +169,25 @@ export default function Home() {
   };
 
   const handleStartGameConfig = (configId: string) => {
+    const currentGameId = selectedGame?.id;
+
     setGameModalVisible(false);
     setSelectedGame(null);
+
+    const gameRoutes: { [key: string]: string } = {
+      "1": "/tictactoe",       
+      "2": "/foodcatching", 
+    };
+
+    const targetPath = gameRoutes[String(currentGameId)] || "/tictactoe";
+
+    console.log(`🚀 弹窗选择成功！游戏ID: ${currentGameId}, 去往页面: ${targetPath}, 配置ID: ${configId}`);
+
     router.push({
-      pathname: "/tictactoe",
-      params: { gameConfigId: configId },
+      pathname: targetPath as any, 
+      params: {
+        gameConfigId: configId,
+      },
     });
   };
 
@@ -325,9 +339,9 @@ export default function Home() {
 
       <Modal visible={gameModalVisible} transparent animationType="fade" onRequestClose={() => setGameModalVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setGameModalVisible(false)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: colors.cardBackground }]} onPress={() => {}}>
+          <Pressable style={[styles.modalCard, { backgroundColor: colors.cardBackground }]} onPress={() => { }}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Select Difficulty</Text>
-            <Text style={{ fontSize: 14, color: colors.text, opacity: 0.7}}>
+            <Text style={{ fontSize: 14, color: colors.text, opacity: 0.7 }}>
               Choose your challenge level
             </Text>
 

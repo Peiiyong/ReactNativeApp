@@ -39,8 +39,17 @@ export default function DifficultyScreen() {
   }, [gameId]);
 
   const handleStartGame = (gameConfigId: string) => {
+    const gameRoutes: { [key: string]: string } = {
+      "1": "/tictactoe",       
+      "2": "/foodcatching",
+    };
+
+    const targetPath = gameRoutes[String(gameId)] || "/tictactoe";
+
+    console.log(`关卡匹配成功!当前游戏ID: ${gameId}, 去往页面: ${targetPath}, 配置ID: ${gameConfigId}`);
+
     router.push({
-      pathname: "/tictactoe",
+      pathname: targetPath as any,
       params: {
         gameConfigId: gameConfigId,
       }
