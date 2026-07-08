@@ -7,7 +7,8 @@ type ProfileAvatarProps = {
   username?: string;
   size?: number;
   onPress?: () => void;
-  showEditIcon?: boolean;
+  badgeIcon?: keyof typeof Ionicons.glyphMap;
+  badgeText?: string;
 };
 
 export default function ProfileAvatar({
@@ -15,7 +16,8 @@ export default function ProfileAvatar({
   username = "User",
   size = 104,
   onPress,
-  showEditIcon = false,
+  badgeIcon,
+  badgeText,
 }: ProfileAvatarProps) {
   const colors = useThemeColors();
   const radius = size / 2;
@@ -49,7 +51,7 @@ export default function ProfileAvatar({
             }
         </View>
 
-        {showEditIcon && (
+{/*         {showEditIcon && (
             <View style={[ styles.camera, { backgroundColor: colors.primary, borderColor: colors.text2 }]}>
             <Ionicons
                 name="camera"
@@ -57,7 +59,24 @@ export default function ProfileAvatar({
                 color={colors.text2}
             />
             </View>
-        )}
+        )} */}
+
+        {/* Badge */}
+        { (badgeIcon || badgeText) && (
+          <View style={[ styles.badge, { backgroundColor:colors.primary, borderColor:colors.text2, }]} >
+            { badgeIcon && (
+              <Ionicons
+                name={badgeIcon}
+                size={18}
+                color={colors.text2}
+              />
+            )}
+            { badgeText && (
+              <Text style={[ styles.badgeText, { color:colors.text2 }]}>{badgeText}</Text>)
+            }
+            </View>
+          )
+        }
       </View>
     </Pressable>
   );
@@ -83,11 +102,32 @@ const styles = StyleSheet.create({
     justifyContent:"center",
     textAlign:"center",
     fontFamily:"Baloo2",
-    fontWeight:"bold",
+    fontWeight:"600",
     textAlignVertical:"center",
   },
 
-  camera:{
+ badge:{
+    position:"absolute",
+    right:8,
+    bottom:8,
+    minWidth:34,
+    height:34,
+    paddingHorizontal:6,
+    borderRadius:18,
+    alignItems:"center",
+    justifyContent:"center",
+    flexDirection:"row",
+    gap:3,
+    borderWidth:2,
+  },
+
+  badgeText:{
+    fontSize:14,
+    fontWeight:"600",
+    fontFamily:"Baloo2",
+  },
+
+/*   camera:{
     position:"absolute",
     right:0,
     bottom:0,
@@ -97,5 +137,5 @@ const styles = StyleSheet.create({
     alignItems:"center",
     justifyContent:"center",
     borderWidth: 1,
-  },
+  }, */
 });

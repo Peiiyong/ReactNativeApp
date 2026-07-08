@@ -175,19 +175,22 @@ export default function ProfileEdit() {
         onLeftPress={() => router.back()}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? (
-          <ActivityIndicator color={colors.text} size="large" />
-        ) : (
+          <View style={styles.loadingContainer}>
+            <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+            <ActivityIndicator color={colors.text} size="large" />
+          </View>
+          ) : (
           <>
            {/* Upload Avatar */}
           <View style={styles.avatarSection}>
             <ProfileAvatar
               imageUri={profileImage}
               username={username}
-              size={104}
+              size={150}
               onPress={pickImage}
-              showEditIcon={true}
+              badgeIcon="camera"
             />
             <Text style={[styles.username, { color:colors.text, }]}> {username} </Text>
             <Text style={[ styles.avatarDescription, { color:colors.navDefaultIcon}]}>
@@ -226,10 +229,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 120,
     gap: 16,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    minHeight: 280,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  loadingText: {
+    fontSize: 24,
+    fontWeight: "600",
+    fontFamily: "Baloo2",
   },
   
   subtitle: {
@@ -240,7 +257,6 @@ const styles = StyleSheet.create({
   avatarSection:{
    alignItems: "center",
    gap: 10,
-   marginBottom: 20,
   },
 
   username:{

@@ -1,5 +1,8 @@
 import AppButton from "@/components/AppButton";
+import AppCard from "@/components/AppCard";
+import AppHeader from "@/components/AppHeader";
 import BottomNavBar from "@/components/BottomNavBar";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import Toast from "@/components/Toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -8,7 +11,7 @@ import { router } from "expo-router";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { get, ref } from "firebase/database";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useAppTheme } from "../theme/theme-provider";
 import { useThemeColors } from "../theme/useThemeColors";
@@ -50,7 +53,14 @@ export default function Profile() {
   )=>{
     setToast({ visible:true, message, type, });
   };
+
+  // Calculate how much EXP the user has gained compared to the EXP required for the next level
+  // Convert it into a percentage value for displaying the progress bar
+  // Math.min() ensures progress < 100%
+  const nextLevelExp = level * 100;
+  const progress = Math.min( (exp / nextLevelExp) * 100, 100);  
   
+
   const loadUserProfile = useCallback(async () => {
     setLoading(true);
     const user = auth.currentUser;
@@ -173,32 +183,56 @@ export default function Profile() {
 
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
-      <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <AppHeader 
+        title="Profile"
+        leftIcon="information-circle-outline"
+        onLeftPress={() => { showToast("This feature is coming soon!", "error");}}
+        rightIcon="settings-outline"
+        onRightPress={handleEditUsername}
+      />
+      
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: colors.text }]}>Loading profile...</Text>
+            <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
             <ActivityIndicator color={colors.text} size="large" />
           </View>
         ) : (
-          <View style={styles.content}>
-            <View style={[styles.card, { backgroundColor: colors.primary }]}>              
-              {profilePictureUrl ? (
-                <Image source={{ uri: profilePictureUrl }} style={styles.profileImage} />
-              ) : (
-                <View style={[styles.avatar, { backgroundColor: colors.primary }]}> 
-                  <Text style={[styles.avatarText, { color: colors.text2 }]}>{avatarLetter}</Text>
-                </View>
-              )}
+          /* DELETE */
+          <View style={styles.content}> 
 
-              <Text style={[styles.username, { color: colors.text }]}>{username}</Text>
-              <Text style={[styles.email, { color: colors.navDefaultIcon }]}>{email}</Text>
+          {/* Avatar */}
+          <View style={styles.avatarSection}>
+            <ProfileAvatar
+              imageUri={profilePictureUrl}
+              username={username}
+              size={180}
+              badgeIcon={level > 5 ? "trophy" : "star"}
+              badgeText={`Lv.${level}`}
+            />
+            <Text style={[styles.username, { color:colors.text }]}> {username} </Text>
+          </View>
+
+          {/* Level Bar */}
+          <AppCard>
+            <View style={styles.levelHeader}>
+              <Text style={[styles.sectionTitle,{color:colors.text}]}> Level {level}</Text>
+              <Text style={[styles.expText,{color:colors.navDefaultIcon}]}> {exp} / {nextLevelExp} EXP</Text>
             </View>
+            <View style={styles.progressBackground}>
+              <View style={[ styles.progressFill, { width:`${progress}%`, backgroundColor:colors.buttonGradient[0]}]}/>
+            </View>
+            <Text
+              style={[
+                styles.remainingText,
+                {
+                  color:colors.navDefaultIcon
+                }
+              ]}
+            >
+              {nextLevelExp - exp} EXP to Level {level + 1}
+            </Text>
+          </AppCard>
 
             <View style={[styles.card, { backgroundColor: colors.primary }]}> 
               <View style={styles.cardHeader}>
@@ -287,20 +321,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginTop: 60,
-    marginBottom: 20,
-  },
-  scrollView: {
-    flex: 1,
-  },
+
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 120,
+    gap: 16,
   },
+
   loadingContainer: {
     flex: 1,
     minHeight: 280,
@@ -308,10 +335,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
+
   loadingText: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: "600",
+    fontFamily: "Baloo2",
   },
+
+  avatarSection:{
+   alignItems: "center",
+   gap: 10,
+  },
+
+  username:{
+    fontSize: 28,
+    fontFamily: "Baloo2",
+    fontWeight: "600",
+  },
+
   content: {
     gap: 14,
   },
@@ -338,11 +379,7 @@ const styles = StyleSheet.create({
     fontSize: 38,
     fontWeight: "bold",
   },
-  username: {
-    fontSize: 30,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
+
   email: {
     fontSize: 16,
     textAlign: "center",
@@ -418,4 +455,35 @@ const styles = StyleSheet.create({
   settingSubtitle: {
     fontSize: 13,
   },
+
+  levelHeader:{
+  flexDirection:"row",
+  justifyContent:"space-between",
+  alignItems:"center",
+},
+
+
+expText:{
+  fontSize:14,
+  fontWeight:"600",
+},
+
+
+progressBackground:{
+  height:14,
+  borderRadius:10,
+  backgroundColor:"#CBD5E1",
+  overflow:"hidden",
+},
+
+
+progressFill:{
+  height:"100%",
+  borderRadius:10,
+},
+
+
+remainingText:{
+  fontSize:13,
+}
 });
