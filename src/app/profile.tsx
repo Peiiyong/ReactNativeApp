@@ -1,5 +1,5 @@
 import AppBox from "@/components/AppBox";
-import AppButton from "@/components/AppButton";
+import AppCard from "@/components/AppCard";
 import AppHeader from "@/components/AppHeader";
 import BottomNavBar from "@/components/BottomNavBar";
 import LevelProgressBar from "@/components/LevelProgressBar";
@@ -189,14 +189,6 @@ export default function Profile() {
     }, [loadUserProfile])
   );
 
-  const handleEditUsername = () => {
-    router.push("/profile-edit");
-  };
-
-  const handleChangePassword = () => {
-    router.push("/change-password");
-  };
-
   const logout = async () => {
     await signOut(auth);
     router.replace("/login");
@@ -215,8 +207,8 @@ export default function Profile() {
         title="Profile"
         leftIcon="information-circle-outline"
         onLeftPress={() => { showToast("This feature is coming soon!", "error");}}
-        rightIcon="settings-outline"
-        onRightPress={handleEditUsername}
+        rightIcon="log-out-outline"
+        onRightPress={confirmLogout}
       />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -226,7 +218,6 @@ export default function Profile() {
             <ActivityIndicator color={colors.text} size="large" />
           </View>
         ) : (
-          /* DELETE */
           <View style={styles.content}> 
 
           <View style={styles.avatarSection}>
@@ -251,68 +242,56 @@ export default function Profile() {
             </View>
           </View>
 
-            <View style={[styles.card, { backgroundColor: colors.primary }]}> 
-              <View style={styles.cardHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Account Info</Text>
-                <Pressable style={styles.iconButton} onPress={handleEditUsername}>
-                  <Ionicons name="create-outline" size={20} color={colors.primary} />
-                </Pressable>
+          <AppCard title="Account Info" rightIcon="create-outline" onIconPress={() => router.push("/profile-edit")}>
+            <View style={styles.infoList}>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Username</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{username}</Text>
               </View>
-              <View style={styles.infoList}>
-                <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Username</Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>{username}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Email</Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>{email}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Registered</Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>{registeredAt}</Text>
-                </View>
-                <View style={styles.statsRow}>
-                  <View style={[styles.statsItem, { backgroundColor: colors.primary, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
-                    <Text style={[styles.statsLabel, { color: colors.navDefaultIcon }]}>Level</Text>
-                    <Text style={[styles.statsValue, { color: colors.text }]}>{level}</Text>
-                  </View>
-                  <View style={[styles.statsItem, { backgroundColor: colors.primary, borderColor: colors.navDefaultIcon, borderWidth: 1 }]}>
-                    <Text style={[styles.statsLabel, { color: colors.navDefaultIcon }]}>Exp</Text>
-                    <Text style={[styles.statsValue, { color: colors.text }]}>{exp}</Text>
-                  </View>
-                </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Email</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{email}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Registered</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{registeredAt}</Text>
               </View>
             </View>
-            <View style={[styles.card, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
+          </AppCard>
 
-              <View style={styles.settingRow}>
-                <View style={styles.settingTextWrap}>
-                  <Text style={[styles.settingTitle, { color: colors.text }]}>Theme mode</Text>
-                  <Text style={[styles.settingSubtitle, { color: colors.navDefaultIcon }]}> 
-                    {themeMode === "dark" ? "Dark mode enabled" : "Light mode enabled"}
-                  </Text>
-                </View>
-
-                <Switch
-                  value={themeMode === "dark"}
-                  onValueChange={toggleThemeMode}
-                  trackColor={{ false: "#94A3B8", true: colors.primary }}
-                  thumbColor={themeMode === "dark" ? "#FFFFFF" : "#F8FAFC"}
-                />
+          <AppCard title="Settings">
+            <View style={styles.infoRow}>
+              <View style={styles.infoTextWrap}>
+                <Text style={[styles.infoLabel, { color: colors.text }]}>Theme mode</Text>
+                <Text style={[styles.infoValueLeft, { color: colors.navDefaultIcon }]}> 
+                  {themeMode === "dark" ? "Dark mode enabled" : "Light mode enabled"}
+                </Text>
               </View>
-            </View>
 
-            <View style={[styles.card, { backgroundColor: colors.primary }]}> 
-              <View style={styles.cardHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Security</Text>
-                <Pressable style={styles.iconButton} onPress={handleChangePassword}>
-                  <Ionicons name="key-outline" size={20} color={colors.primary} />
-                </Pressable>
-              </View>
-              <Text style={[styles.sectionDescription, { color: colors.navDefaultIcon }]}>Change your password from a dedicated screen.</Text>
-              <AppButton title="LOGOUT" icon="log-out-outline" onPress={confirmLogout} />
+              <Switch
+                value={themeMode === "dark"}
+                onValueChange={toggleThemeMode}
+                trackColor={{ false: "#94A3B8", true: colors.primary }}
+                thumbColor={themeMode === "dark" ? "#FFFFFF" : "#F8FAFC"}
+              />
             </View>
+          </AppCard>
+
+          <AppCard title="Security">
+            <Pressable style={styles.infoRow} onPress={() => router.push("/change-password")}>
+              <View style={styles.infoTextWrap}>
+                <Text style={[styles.infoLabel, { color: colors.text }]}> Reset password</Text>
+                <Text style={[styles.infoValueLeft, { color: colors.navDefaultIcon }]}>
+                  Change your account password
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={22}
+                color={colors.primary}
+              />
+            </Pressable>
+          </AppCard>
           </View>
         )}
       </ScrollView>
@@ -331,12 +310,15 @@ export default function Profile() {
       <BottomNavBar />
     </LinearGradient>
   );
-
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  content: {
+    gap:16
   },
 
   scrollContent: {
@@ -370,184 +352,42 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-
-
-
-levelHeader:{
-  flexDirection:"row",
-  justifyContent:"space-between",
-  alignItems:"center",
-  marginBottom:8,
-},
-
-
-
-levelInfo:{
-  width:"100%",
-  flexDirection:"row",
-  justifyContent:"space-between",
-  alignItems:"center",
-  marginBottom:6,
-},
-
-
-levelText:{
-  fontSize:18,
-  fontWeight:"700",
-  fontFamily:"Baloo2",
-},
-
-
-expText:{
-  fontSize:13,
-  fontWeight:"600",
-},
-
-
-progressBackground:{
-  width:"100%",
-  height:10,
-  borderRadius:10,
-  backgroundColor:"#CBD5E1",
-  overflow:"hidden",
-},
-
-progressContainer:{
-  width:"85%",
-  height:28,
-  borderRadius:14,
-  backgroundColor:"#CBD5E1",
-  overflow:"hidden",
-  justifyContent:"center",
-},
-
-
-progressFill:{
-  position:"absolute",
-  left:0,
-  top:0,
-  bottom:0,
-  borderRadius:14,
-},
-
-
-progressTextContainer:{
-  flexDirection:"row",
-  justifyContent:"space-between",
-  paddingHorizontal:12,
-},
-
-
-progressText:{
-  color:"#FFFFFF",
-  fontSize:13,
-  fontWeight:"700",
-  fontFamily:"Baloo2",
-},
-
-
-remainingText:{
-  marginTop:5,
-  fontSize:12,
-},
-content: {gap:16},
-  card: {
-    borderRadius: 24,
-    padding: 20,
-    gap: 14,
-  },
-  avatar: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-  },
-  profileImage: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    alignSelf: "center",
-  },
-  avatarText: {
-    fontSize: 38,
-    fontWeight: "bold",
-  },
-
-  email: {
-    fontSize: 16,
-    textAlign: "center",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  sectionDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  infoList: {
-    gap: 12,
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  infoLabel: {
-    fontSize: 14,
-  },
-  infoValue: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "right",
-  },
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
     marginTop: 10,
   },
-  statsItem: {
+
+  infoList: {
+    gap: 12,
+  },
+
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+
+  infoLabel: {
+    fontSize: 14,
+    fontFamily: "Baloo2",
+  },
+
+  infoValue: {
     flex: 1,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: "center",
+    fontSize: 14,
+    fontFamily: "Baloo2",
+    textAlign: "right",
   },
-  statsLabel: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  statsValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  iconButton: {
-    padding: 6,
-  },
-  settingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-  },
-  settingTextWrap: {
+
+  infoTextWrap: {
     flex: 1,
     paddingRight: 16,
   },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  settingSubtitle: {
+
+  infoValueLeft: {
+    fontFamily: "Baloo2",
     fontSize: 13,
   },
 });
