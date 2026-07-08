@@ -2,6 +2,7 @@ import AppBox from "@/components/AppBox";
 import AppButton from "@/components/AppButton";
 import AppCard from "@/components/AppCard";
 import AppHeader from "@/components/AppHeader";
+import AppLoading from "@/components/AppLoading";
 import AppModal from "@/components/AppModal";
 import BottomNavBar from "@/components/BottomNavBar";
 import LevelProgressBar from "@/components/LevelProgressBar";
@@ -14,7 +15,7 @@ import { router } from "expo-router";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { get, ref } from "firebase/database";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useAppTheme } from "../theme/theme-provider";
 import { useThemeColors } from "../theme/useThemeColors";
@@ -215,11 +216,7 @@ export default function Profile() {
       />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
-            <ActivityIndicator color={colors.text} size="large" />
-          </View>
+        {loading ? (<AppLoading />
         ) : (
           <View style={styles.content}> 
 
@@ -346,20 +343,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 120,
     gap: 16,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    minHeight: 280,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  loadingText: {
-    fontSize: 24,
-    fontWeight: "600",
-    fontFamily: "Baloo2",
   },
 
   avatarSection:{

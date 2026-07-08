@@ -2,6 +2,7 @@ import AppButton from "@/components/AppButton";
 import AppCard from "@/components/AppCard";
 import AppHeader from "@/components/AppHeader";
 import AppInput from "@/components/AppInput";
+import AppLoading from "@/components/AppLoading";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import Toast from "@/components/Toast";
 import * as ImagePicker from "expo-image-picker";
@@ -10,7 +11,7 @@ import { router } from "expo-router";
 import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { get, ref, update } from "firebase/database";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -176,11 +177,7 @@ export default function ProfileEdit() {
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
-            <ActivityIndicator color={colors.text} size="large" />
-          </View>
+        {loading ? (<AppLoading />
           ) : (
           <>
            {/* Upload Avatar */}
@@ -201,7 +198,7 @@ export default function ProfileEdit() {
           <AppCard>
            {/* Edit Username */}
             <Text style={[styles.subtitle, { color: colors.text }]}>Username</Text>
-            <AppInput placeholder="Username" icon="person-outline" value={username} onChangeText={setUsername} />
+            <AppInput placeholder="Enter Username" icon="person-outline" value={username} onChangeText={setUsername} />
           </AppCard>
 
           <AppButton title={saving ? "Saving..." : "Save Profile"} icon="checkmark-done-outline" onPress={saveProfile} />  
@@ -233,20 +230,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 120,
     gap: 16,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    minHeight: 280,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  loadingText: {
-    fontSize: 24,
-    fontWeight: "600",
-    fontFamily: "Baloo2",
   },
   
   subtitle: {
