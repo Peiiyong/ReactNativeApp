@@ -1,7 +1,7 @@
 import AppButton from "@/components/AppButton";
 import AppCard from "@/components/AppCard";
+import AppHeader from "@/components/AppHeader";
 import AppInput from "@/components/AppInput";
-import BackHeader from "@/components/BackHeader";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import Toast from "@/components/Toast";
 import * as ImagePicker from "expo-image-picker";
@@ -169,7 +169,11 @@ export default function ProfileEdit() {
 
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
-      <BackHeader title="Edit Profile" />
+      <AppHeader 
+        title="Edit Profile"
+        leftIcon="arrow-back-outline"
+        onLeftPress={() => router.back()}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         {loading ? (
