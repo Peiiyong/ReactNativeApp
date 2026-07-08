@@ -1,12 +1,13 @@
 import AppButton from "@/components/AppButton";
 import BottomNavBar from "@/components/BottomNavBar";
+import Toast from "@/components/Toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { get, ref } from "firebase/database";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useAppTheme } from "../theme/theme-provider";
@@ -33,12 +34,23 @@ export default function Profile() {
   const [level, setLevel] = useState(1);
   const [exp, setExp] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
-  const [toastVisible, setToastVisible] = useState(false);
   const [userKey, setUserKey] = useState<string | null>(null);
-  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Toast state
+  const [toast, setToast] = useState({
+    visible:false,
+    message:"",
+    type:"success" as "success" | "error",
+  });
+
+  // Function to show toast message
+  const showToast = (
+    message:string,
+    type:"success"|"error"="success"
+  )=>{
+    setToast({ visible:true, message, type, });
+  };
+  
   const loadUserProfile = useCallback(async () => {
     setLoading(true);
     const user = auth.currentUser;
@@ -128,9 +140,6 @@ export default function Profile() {
 
     return () => {
       unsubscribe();
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
     };
   }, [loadUserProfile]);
 
@@ -139,20 +148,6 @@ export default function Profile() {
       loadUserProfile();
     }, [loadUserProfile])
   );
-
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToastMessage(message);
-    setToastType(type);
-    setToastVisible(true);
-
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current);
-    }
-
-    toastTimeoutRef.current = setTimeout(() => {
-      setToastVisible(false);
-    }, 5000);
-  };
 
   const handleEditUsername = () => {
     router.push("/profile-edit");
@@ -271,12 +266,17 @@ export default function Profile() {
         )}
       </ScrollView>
 
-      {toastVisible && (
-        <View style={[styles.toast, toastType === "error" ? styles.toastError : styles.toastSuccess]}>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </View>
-      )}
-
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() =>
+          setToast(prev=>({
+            ...prev,
+            visible:false
+          }))
+        }
+      />
       <BottomNavBar />
     </LinearGradient>
   );
@@ -400,35 +400,6 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: 6,
-  },
-  toast: {
-    position: "absolute",
-    left: 20,
-    right: 20,
-    bottom: 40,
-    padding: 12,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
-    zIndex: 10,
-  },
-  toastSuccess: {
-    backgroundColor: "#22c55e",
-  },
-  toastError: {
-    backgroundColor: "#ef4444",
-  },
-  toastText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  messageText: {
-    marginTop: 10,
-    textAlign: "center",
   },
   settingRow: {
     flexDirection: "row",

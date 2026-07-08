@@ -1,11 +1,12 @@
 import AppButton from "@/components/AppButton";
 import AppInput from "@/components/AppInput";
+import Toast from "@/components/Toast";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { get, ref, update } from "firebase/database";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
@@ -16,11 +17,22 @@ export default function ProfileEdit() {
   const [originalUsername, setOriginalUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
   const [userKey, setUserKey] = useState<string | null>(null);
-  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Toast state
+  const [toast, setToast] = useState({
+    visible:false,
+    message:"",
+    type:"success" as "success" | "error",
+  });
+
+  // Function to show toast message
+  const showToast = (
+    message:string,
+    type:"success"|"error"="success"
+  )=>{
+    setToast({ visible:true, message, type, });
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -87,22 +99,8 @@ export default function ProfileEdit() {
 
     return () => {
       unsubscribe();
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
     };
   }, []);
-
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToastMessage(message);
-    setToastType(type);
-    setToastVisible(true);
-
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current);
-    }
-    toastTimeoutRef.current = setTimeout(() => setToastVisible(false), 5000);
-  };
 
   const saveUsername = async () => {
     const trimmedName = username.trim();
@@ -161,11 +159,17 @@ export default function ProfileEdit() {
         )}
       </ScrollView>
 
-      {toastVisible && (
-        <View style={[styles.toast, toastType === "error" ? styles.toastError : styles.toastSuccess]}>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </View>
-      )}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() =>
+          setToast(prev=>({
+            ...prev,
+            visible:false
+          }))
+        }
+      />
     </LinearGradient>
   );
 }
@@ -202,29 +206,5 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-  },
-  toast: {
-    position: "absolute",
-    left: 20,
-    right: 20,
-    bottom: 40,
-    borderRadius: 16,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  toastText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  toastSuccess: {
-    backgroundColor: "#22c55e",
-  },
-  toastError: {
-    backgroundColor: "#ef4444",
   },
 });
