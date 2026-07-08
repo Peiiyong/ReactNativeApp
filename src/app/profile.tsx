@@ -1,6 +1,8 @@
 import AppBox from "@/components/AppBox";
+import AppButton from "@/components/AppButton";
 import AppCard from "@/components/AppCard";
 import AppHeader from "@/components/AppHeader";
+import AppModal from "@/components/AppModal";
 import BottomNavBar from "@/components/BottomNavBar";
 import LevelProgressBar from "@/components/LevelProgressBar";
 import ProfileAvatar from "@/components/ProfileAvatar";
@@ -44,6 +46,7 @@ export default function Profile() {
   const MAX_BADGE_LEVEL = 5;
   const [loading, setLoading] = useState(true);
   const [userKey, setUserKey] = useState<string | null>(null);
+  const [logoutModal,setLogoutModal]=useState(false);
 
   // Toast state
   const [toast, setToast] = useState({
@@ -208,7 +211,7 @@ export default function Profile() {
         leftIcon="information-circle-outline"
         onLeftPress={() => { showToast("This feature is coming soon!", "error");}}
         rightIcon="log-out-outline"
-        onRightPress={confirmLogout}
+        onRightPress={()=>setLogoutModal(true)}
       />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -307,6 +310,24 @@ export default function Profile() {
           }))
         }
       />
+
+      <AppModal
+        visible={logoutModal}
+        title="Logout?"
+        description="Are you sure you want to logout?"
+        onClose={()=>setLogoutModal(false)}
+      >
+        <View style={styles.btnRow}>
+          <AppButton
+          title="Cancel"
+          onPress={()=>setLogoutModal(false)}
+          />
+          <AppButton
+          title="Logout"
+          onPress={logout}
+          />
+        </View>
+      </AppModal>
       <BottomNavBar />
     </LinearGradient>
   );
@@ -389,5 +410,11 @@ const styles = StyleSheet.create({
   infoValueLeft: {
     fontFamily: "Baloo2",
     fontSize: 13,
+  },
+
+  btnRow: {
+    justifyContent:"flex-end",
+    flexDirection:"row",
+    gap:5,
   },
 });
