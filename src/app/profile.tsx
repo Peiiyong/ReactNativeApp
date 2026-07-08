@@ -12,23 +12,16 @@ import { auth, database } from "../firebase/firebase";
 import { useAppTheme } from "../theme/theme-provider";
 import { useThemeColors } from "../theme/useThemeColors";
 
-function formatJoinedDate(dateString?: string | null) {
-  if (!dateString) {
-    return "Unknown";
-  }
+const formatJoinedDate = (timestamp?: number | string) => {
+  if (!timestamp) return "";
+  const date = typeof timestamp === "number" ? new Date(timestamp) : new Date(timestamp);
 
-  const date = new Date(dateString);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
+  return date.toLocaleDateString(undefined, {
     year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(date);
-}
+    month: "2-digit",
+    day: "2-digit",
+  });
+};
 
 export default function Profile() {
   const colors = useThemeColors();
@@ -74,7 +67,8 @@ export default function Profile() {
           setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
           setEmail(userData.email ?? user.email ?? "No email available");
           if (userData.createdAt) {
-            setRegisteredAt(formatJoinedDate(String(userData.createdAt)));
+            setRegisteredAt(formatJoinedDate(userData.createdAt));
+            console.log("Created At:", userData.createdAt);
           }
         } else {
           const directRef = ref(database, `users/${user.uid}`);
@@ -89,7 +83,7 @@ export default function Profile() {
             setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
             setEmail(userData.email ?? user.email ?? "No email available");
             if (userData.createdAt) {
-              setRegisteredAt(formatJoinedDate(String(userData.createdAt)));
+              setRegisteredAt(formatJoinedDate(userData.createdAt));
             }
           } else {
             setProfilePictureUrl(user.photoURL ?? null);
@@ -108,7 +102,7 @@ export default function Profile() {
           setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
           setEmail(userData.email ?? user.email ?? "No email available");
           if (userData.createdAt) {
-            setRegisteredAt(formatJoinedDate(String(userData.createdAt)));
+            setRegisteredAt(formatJoinedDate(userData.createdAt));
           }
         } else {
           setProfilePictureUrl(user.photoURL ?? null);
