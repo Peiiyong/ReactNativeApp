@@ -68,7 +68,7 @@ export default function Profile() {
           setEmail(userData.email ?? user.email ?? "No email available");
           if (userData.createdAt) {
             setRegisteredAt(formatJoinedDate(userData.createdAt));
-            console.log("Created At:", userData.createdAt);
+/*             console.log("Created At:", userData); */
           }
         } else {
           const directRef = ref(database, `users/${user.uid}`);
