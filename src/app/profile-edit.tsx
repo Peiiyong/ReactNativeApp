@@ -141,10 +141,22 @@ export default function ProfileEdit() {
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back-outline" size={20} color={colors.primary} />
-          <Text style={[styles.backText, { color: colors.primary }]}>Back</Text>
+          <View
+            style={{
+              width:48,
+              height:36,
+              borderRadius:16,
+              borderWidth:1,
+              borderColor:colors.activeIcon,
+              backgroundColor:colors.activeIconBackground,
+              alignItems:"center",
+              justifyContent:"center",
+            }}
+          >
+          <Ionicons name="arrow-back-outline" size={20} color={colors.text} />
+          </View>
         </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>Edit Username</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>

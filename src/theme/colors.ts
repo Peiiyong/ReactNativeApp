@@ -19,7 +19,7 @@ export const Colors = {
     activeIconBackground: "#1a58df",
     activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
 
-    // msg
+    // toast msg
     errorMsg: "#EF4444",
     successMsg: "#22C55E",
 
@@ -46,7 +46,7 @@ export const Colors = {
     activeIconBackground: "#781bcf",
     activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
     
-    // msg
+    // toast msg
     errorMsg: "#EF4444",
     successMsg: "#22C55E",
 

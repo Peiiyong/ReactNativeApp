@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { useThemeColors } from "../theme/useThemeColors";
 
 type AppInputProps = {
@@ -22,48 +23,64 @@ export default function AppInput({
   const [hidePassword, setHidePassword] = useState(secureTextEntry);
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        borderWidth: 1,
-        borderColor: colors.titleText,
-        borderRadius: 12,
-        paddingHorizontal: 12,
-        marginBottom: 10,
-      }}
-    >
-      {icon && (
-        <Ionicons
-          name={icon}
-          size={20}
-          color={colors.text}
-          style={{ marginRight: 10 }}
-        />
-      )}
-
-      <TextInput
-        style={{
-          flex: 1,
-          height: 50,
-          color: colors.text,
-        }}
-        placeholder={placeholder}
-        placeholderTextColor={colors.navDefaultIcon}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={hidePassword}
-      />
-
-      {secureTextEntry && (
-        <Pressable onPress={() => setHidePassword(!hidePassword)}>
-            <Ionicons
-            name={hidePassword ? "eye-off-outline" : "eye-outline"}
-            size={22}
+    <LinearGradient colors={colors.activeIconBorder} style={styles.gradient}>
+      <View
+        style={[ styles.container, { backgroundColor: colors.innerBackground[0] }]}
+      >
+        {icon && (
+          <Ionicons
+            name={icon}
+            size={20}
             color={colors.text}
-            />
-        </Pressable>
+            style={styles.icon}
+          />
         )}
-    </View>
+        <TextInput
+          style={[ styles.input, { color: colors.text } ]}
+          placeholder={placeholder}
+          placeholderTextColor={colors.navDefaultIcon}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={hidePassword}
+        />
+
+        {secureTextEntry && (
+          <Pressable onPress={() => setHidePassword(!hidePassword)}>
+            <Ionicons
+              name={hidePassword ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color={colors.text}
+            />
+          </Pressable>
+          )}
+      </View>
+    </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  gradient:{
+    borderRadius:12,
+    padding:1.5,
+    marginBottom:10,
+  },
+
+  container:{
+    flexDirection:"row",
+    alignItems:"center",
+    borderRadius:10,
+    paddingHorizontal:12,
+  },
+
+  icon:{
+    marginRight:10,
+  },
+
+  input:{
+    fontFamily: "Baloo2",
+    fontSize: 16,
+    fontWeight:"600",
+    flex:1,
+    height:50,
+  },
+});

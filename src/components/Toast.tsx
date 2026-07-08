@@ -72,5 +72,7 @@ const styles = StyleSheet.create({
   toastText:{
     textAlign:"center",
     fontWeight:"600",
+    fontSize: 16,
+    fontFamily: "Baloo2",
   }
 });
