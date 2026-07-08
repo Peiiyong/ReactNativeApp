@@ -234,12 +234,44 @@ const TicTacToeGame = () => {
             if (gameStatus === 'win' && earnedPoints > 0) {
                 const userRef = ref(database, `users/${realUserId}`);
                 const snapshot = await get(userRef);
+
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
+
+                    const currentExp = userData.exp || 0;
+                    const currentLevel = userData.level || 1;
+                    const currentPoints = userData.currentPoints || 0;
+
+                    const newExp = currentExp + earnedPoints;
+                    const levelRef = ref(database, "level_config");
+                    const levelSnapshot = await get(levelRef);
+
+                    let newLevel = currentLevel;
+
+                    if (levelSnapshot.exists()) {
+                        const levelConfigs = Object.values(levelSnapshot.val()) as any[];
+                        levelConfigs.sort((a: any, b: any) => a.level - b.level);
+
+                        for (const config of levelConfigs) {
+                            if (newExp >= config.requiredPoint) {
+                                newLevel = config.level;
+                            }
+                        }
+                    }
+
+                    // update user level in firebase
                     await update(userRef, {
-                        exp: (userData.exp || 0) + earnedPoints,
-                        currentPoints: (userData.currentPoints || 0) + earnedPoints
+                        exp: newExp,
+                        currentPoints: currentPoints + earnedPoints,
+                        level: newLevel,
                     });
+
+/*                     if (newLevel > currentLevel) {
+                        Alert.alert(
+                            "🎉 Level Up!",
+                            `Congratulations!\nYou reached Level ${newLevel}!`
+                        );
+                    } */
                 }
             }
 
