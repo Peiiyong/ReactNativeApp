@@ -1,13 +1,13 @@
 import AppButton from "@/components/AppButton";
 import AppInput from "@/components/AppInput";
+import BackHeader from "@/components/BackHeader";
 import Toast from "@/components/Toast";
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { get, ref, update } from "firebase/database";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -35,12 +35,14 @@ export default function ProfileEdit() {
   };
 
   useEffect(() => {
+    // check if user is logged in or not
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.replace("/login");
         return;
       }
 
+      // Load user profile data from Firebase Realtime Database
       const loadProfile = async () => {
         try {
           const usersRef = ref(database, "users");
@@ -139,34 +141,17 @@ export default function ProfileEdit() {
 
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <View
-            style={{
-              width:48,
-              height:36,
-              borderRadius:16,
-              borderWidth:1,
-              borderColor:colors.activeIcon,
-              backgroundColor:colors.activeIconBackground,
-              alignItems:"center",
-              justifyContent:"center",
-            }}
-          >
-          <Ionicons name="arrow-back-outline" size={20} color={colors.text} />
-          </View>
-        </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
-      </View>
+      <BackHeader title="Edit Profile" />
 
       <ScrollView contentContainerStyle={styles.content}>
         {loading ? (
           <ActivityIndicator color={colors.text} size="large" />
         ) : (
           <>
+           {/* Edit Username */}
             <Text style={[styles.subtitle, { color: colors.navDefaultIcon }]}>Enter the username you want to use in your profile.</Text>
             <AppInput placeholder="Username" icon="person-outline" value={username} onChangeText={setUsername} />
-            <AppButton title={saving ? "Saving..." : "Save Username"} icon="checkmark-done-outline" onPress={saveUsername} />
+            <AppButton title={saving ? "Saving..." : "Save Profile"} icon="checkmark-done-outline" onPress={saveUsername} />
           </>
         )}
       </ScrollView>
@@ -190,33 +175,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
+
   content: {
     paddingHorizontal: 20,
     paddingBottom: 120,
     gap: 16,
   },
+  
   subtitle: {
     fontSize: 14,
+    fontFamily: "Baloo2",
   },
 });
