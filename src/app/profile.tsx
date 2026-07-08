@@ -7,7 +7,7 @@ import { router } from "expo-router";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { get, ref } from "firebase/database";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet,Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useAppTheme } from "../theme/theme-provider";
 import { useThemeColors } from "../theme/useThemeColors";
@@ -453,9 +453,5 @@ const styles = StyleSheet.create({
   },
   settingSubtitle: {
     fontSize: 13,
-  },
-  sectionDescription: {
-    fontSize: 13,
-    lineHeight: 18,
   },
 });
