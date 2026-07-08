@@ -1,8 +1,11 @@
+import AppHeader from "@/components/AppHeader";
+import AppLoading from "@/components/AppLoading";
 import BottomNavBar from "@/components/BottomNavBar";
+import FilterButton from "@/components/FilterButton";
 import { LinearGradient } from "expo-linear-gradient";
 import { get, onValue, ref } from "firebase/database";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -21,6 +24,9 @@ export default function History() {
     const [historyList, setHistoryList] = useState<HistoryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const [dateFilter, setDateFilter] = useState<"today" | "week" | "month" | "all">("all");
+    const [statusFilter, setStatusFilter] = useState<"all" | "win" | "lose" | "draw">("all");
 
     useEffect(() => {
         const user = auth.currentUser;
@@ -102,7 +108,11 @@ export default function History() {
         };
     }, []);
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status?: string) => {
+        if(typeof status !== "string"){
+            return "#94A3B8";
+        }
+
         switch (status?.toLowerCase()) {
             case "win": return colors.successMsg || "#4CD964";
             case "lose": return colors.errorMsg || "#FF3B30";
@@ -121,21 +131,78 @@ export default function History() {
         });
     };
 
+    const isToday = (timestamp:number)=>{
+        const today = new Date();
+        const date = new Date(timestamp);
+
+        return (
+            today.getFullYear() === date.getFullYear() &&
+            today.getMonth() === date.getMonth() &&
+            today.getDate() === date.getDate()
+        );
+    };
+
+    const isWithinDays = (timestamp:number, days:number)=>{
+        const now = new Date();
+        const date = new Date(timestamp);
+
+        const diff =
+        now.getTime() - date.getTime();
+
+        const diffDays =
+        diff / (1000 * 60 * 60 * 24);
+
+        return diffDays <= days;
+    };
+
+    const filteredHistory = historyList.filter((item)=>{
+        // status filter
+        if(statusFilter !== "all" && item.gameStatus !== statusFilter){
+            return false;
+        }
+
+        // date filter
+        if(dateFilter==="today"){
+            return isToday(item.createdAt);
+        }
+
+        if(dateFilter==="week"){
+            return isWithinDays(item.createdAt,7);
+        }
+
+        if(dateFilter==="month"){
+            return isWithinDays(item.createdAt,30);
+        }
+        return true;
+    });
+
     return (
         <LinearGradient colors={colors.innerBackground} style={styles.container}>
-            <Text style={[styles.title, { color: colors.text }]}>Game History</Text>
+            <AppHeader title="Game History"/>
+            <View style={styles.filterContainer}>
+                <View style={styles.filterGroup}>
+                    <FilterButton title="All" active={dateFilter==="all"} onPress={()=>setDateFilter("all")} />
+                    <FilterButton title="Today" active={dateFilter==="today"} onPress={()=>setDateFilter("today")}/>
+                    <FilterButton title="Last Week" active={dateFilter==="week"} onPress={()=>setDateFilter("week")}/>
+                    <FilterButton title="Last Month" active={dateFilter==="month"} onPress={()=>setDateFilter("month")}/>
 
-            {loading ? (
-                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color={colors.text} />
                 </View>
-            ) : historyList.length === 0 ? (
-                <View style={styles.centerContainer}>
-                    <Text style={{ color: colors.text, opacity: 0.6 }}>There are no records yet.</Text>
+                <View style={styles.filterGroup}>
+                    <FilterButton title="All" active={statusFilter==="all"} onPress={()=>setStatusFilter("all")} />
+                    <FilterButton title="WIN" active={statusFilter==="win"} onPress={()=>setStatusFilter("win")} />
+                    <FilterButton title="DRAW" active={statusFilter==="draw"} onPress={()=>setStatusFilter("draw")} />
+                    <FilterButton title="LOSE" active={statusFilter==="lose"} onPress={()=>setStatusFilter("lose")} />
                 </View>
+            </View>
+
+            {loading ? (<AppLoading />
+            ) : filteredHistory.length === 0 ? (
+                <View style={styles.noRecordContainer}>
+                    <Text style={[styles.noRecordText, { color: colors.text, opacity: 0.6 }]}>There are no records yet.</Text>
+                </View>                
             ) : (
                 <FlatList
-                    data={historyList}
+                    data={filteredHistory}
                     keyExtractor={(item) => item.id}
                     style={styles.list}
                     contentContainerStyle={styles.listContent}
@@ -147,7 +214,7 @@ export default function History() {
                             <TouchableOpacity
                                 activeOpacity={0.85}
                                 onPress={() => setExpandedId(isExpanded ? null : item.id)}
-                                style={[styles.card, { backgroundColor: colors.cardBackground }]}
+                                style={[styles.card, { backgroundColor: colors.cardBackground[0] }]}
                             >
                                 {/* ─── simple info ─── */}
                                 <View style={styles.cardHeader}>
@@ -180,7 +247,7 @@ export default function History() {
 
                                         <View style={styles.infoRow}>
                                             <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Match Result</Text>
-                                            <Text style={[styles.infoValue, { color: statusColor, fontWeight: "700" }]}>
+                                            <Text style={[styles.infoValue, { color: statusColor, fontWeight: "600" }]}>
                                                 {item.gameStatus.toUpperCase()}
                                             </Text>
                                         </View>
@@ -190,7 +257,7 @@ export default function History() {
                                             <Text style={[
                                                 styles.infoValue, 
                                                 item.gameStatus === 'win' 
-                                                    ? { color: colors.successMsg || "#4CD964", fontWeight: "700" } 
+                                                    ? { color: colors.successMsg || "#4CD964", fontWeight: "600" } 
                                                     : { color: colors.text }
                                             ]}>
                                                 {item.gameStatus === 'win' ? `+${item.point} pts` : `0 pts`}
@@ -213,7 +280,6 @@ export default function History() {
                     }}
                 />
             )}
-
             <BottomNavBar />
         </LinearGradient>
     );
@@ -221,21 +287,23 @@ export default function History() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    title: { fontSize: 26, fontWeight: "bold", textAlign: "center", marginTop: 60, marginBottom: 20 },
-    centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+    noRecordContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+    noRecordText: {fontFamily: "Baloo2"},
+    filterContainer:{paddingHorizontal:20,marginBottom:12,gap:10,},
+    filterGroup:{flexDirection:"row",gap:8,},
     list: { flex: 1, width: "100%" },
     listContent: { paddingHorizontal: 20, paddingBottom: 120 },
     card: { borderRadius: 20, padding: 18, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 6 },
     cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     headerLeft: { gap: 4, flex: 1 },
     headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-    gameName: { fontSize: 17, fontWeight: "700" },
-    statusBadge: { overflow: "hidden", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, fontSize: 11, fontWeight: "700", textAlign: "center", minWidth: 60 },
+    gameName: { fontSize: 17, fontWeight: "600", fontFamily: "Baloo2"},
+    statusBadge: { overflow: "hidden", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, fontFamily: "Baloo2", fontSize: 11, fontWeight: "600", textAlign: "center", minWidth: 60 },
     arrowIcon: { fontSize: 10, opacity: 0.5 },
-    timeText: { fontSize: 12, opacity: 0.6 },
+    timeText: { fontSize: 12, opacity: 0.6, fontFamily: "Baloo2" },
     cardBody: { gap: 12, marginTop: 12 },
     divider: { height: 1, opacity: 0.1, marginBottom: 4 },
     infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 16 },
-    infoLabel: { fontSize: 14 },
-    infoValue: { flex: 1, fontSize: 14, fontWeight: "500", textAlign: "right" },
+    infoLabel: { fontSize: 14, fontFamily: "Baloo2" },
+    infoValue: { flex: 1, fontSize: 14, fontWeight: "500", textAlign: "right", fontFamily: "Baloo2" },
 });
