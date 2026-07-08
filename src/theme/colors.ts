@@ -1,40 +1,56 @@
 export const Colors = {
   light: {
+    // background
     background: "#F4F7FF",
     innerBackground: ["#FFFFFF", "#E0E7FF", "#CBD5E1"] as const,
-    navBackground: "#FFFFFF",
     cardBackground: "rgba(255,255,255,0.75)",
 
+    // text and button 
     titleText: "#FFC300",
     titleTextShadow: "#FFF44F",
     text: "#2a290f",
     text2: "#FFFFFF",
     buttonGradient: ["#2563EB", "#4F46E5", "#7C3AED"] as const,
+
+    // bottom nav bar
+    navBackground: "#FFFFFF",
     navDefaultIcon: "#64748B",
+    activeIcon: "#FFFFFF",
+    activeIconBackground: "#1a58df",
+    activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
+
+    // msg
+    errorMsg: "#EF4444",
+    successMsg: "#22C55E",
 
     primaryGradient: ["#2563EB", "#4F46E5", "#7C3AED"] as const,
     primary: "#2563EB",
-
-    errorMsg: "#EF4444",
-    successMsg: "#22C55E",
   },
   dark: {
+    // background
     background: "#5353ff",
     innerBackground: ["#4C1D95", "#4C1D95", "#000000"] as const,
-    navBackground: "#1b1b1b",
     cardBackground: "rgba(15,23,42,0.7)",
 
+    // text and button
     titleText: "#ffffff",
     titleTextShadow: "#b06cf0",
     text: "#FFFFFF",
     text2: "#FFFFFF",
     buttonGradient: ["#b06cf0", "#7e46d7", "#9333EA"] as const,
-    navDefaultIcon: "#94A3B8",
 
-    primaryGradient: ["#0b0810", "#5B21B6", "#9333EA"] as const,
-    primary: "#9333EA",
+    //bottom nav bar
+    navBackground: "#1e293b",
+    navDefaultIcon: "#94A3B8",
+    activeIcon: "#FFFFFF",
+    activeIconBackground: "#781bcf",
+    activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
     
+    // msg
     errorMsg: "#EF4444",
     successMsg: "#22C55E",
+
+    primaryGradient: ["#0b0810", "#5B21B6", "#9333EA"] as const,
+    primary: "#9333EA",  
   },
 };
