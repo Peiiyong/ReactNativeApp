@@ -2,8 +2,8 @@ export const Colors = {
   light: {
     // background
     background: "#F4F7FF",
-    innerBackground: ["#FFFFFF", "#E0E7FF", "#CBD5E1"] as const,
-    cardBackground: "rgba(255,255,255,0.75)",
+    innerBackground: ["#FFFFFF","#E0F2FE","#C7D2FE"] as const,
+    cardBackground: ["#FFFFFF","#E0F2FE","#C7D2FE"] as const,
 
     // text and button 
     titleText: "#FFC300",
@@ -30,7 +30,7 @@ export const Colors = {
     // background
     background: "#5353ff",
     innerBackground: ["#4C1D95", "#4C1D95", "#000000"] as const,
-    cardBackground: "rgba(15,23,42,0.7)",
+    cardBackground: ["#6227bb", "#6030a9", "#3d1452"] as const,
 
     // text and button
     titleText: "#ffffff",

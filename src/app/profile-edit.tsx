@@ -1,13 +1,16 @@
 import AppButton from "@/components/AppButton";
+import AppCard from "@/components/AppCard";
+import AppHeader from "@/components/AppHeader";
 import AppInput from "@/components/AppInput";
-import BackHeader from "@/components/BackHeader";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import Toast from "@/components/Toast";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged, updateProfile } from "firebase/auth";
 import { get, ref, update } from "firebase/database";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -18,6 +21,8 @@ export default function ProfileEdit() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userKey, setUserKey] = useState<string | null>(null);
+  const [originalProfileImage, setOriginalProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   // Toast state
   const [toast, setToast] = useState({
@@ -56,6 +61,8 @@ export default function ProfileEdit() {
               const userData = users[matchingKey];
               setUserKey(matchingKey);
               const displayName = userData.userName ?? userData.username ?? "";
+              setProfileImage(userData.profilePicture ?? null);
+              setOriginalProfileImage(userData.profilePicture ?? null);
               setUsername(displayName);
               setOriginalUsername(displayName);
             } else {
@@ -65,6 +72,8 @@ export default function ProfileEdit() {
                 const userData = directSnapshot.val();
                 setUserKey(user.uid);
                 const displayName = userData.userName ?? userData.username ?? "";
+                setProfileImage(userData.profilePicture ?? null);
+                setOriginalProfileImage(userData.profilePicture ?? null);
                 setUsername(displayName);
                 setOriginalUsername(displayName);
               } else {
@@ -80,6 +89,8 @@ export default function ProfileEdit() {
               const userData = directSnapshot.val();
               setUserKey(user.uid);
               const displayName = userData.userName ?? userData.username ?? "";
+              setProfileImage(userData.profilePicture ?? null);
+              setOriginalProfileImage(userData.profilePicture ?? null);
               setUsername(displayName);
               setOriginalUsername(displayName);
             } else {
@@ -104,15 +115,19 @@ export default function ProfileEdit() {
     };
   }, []);
 
-  const saveUsername = async () => {
+  const saveProfile = async () => {
     const trimmedName = username.trim();
+    const noChanges =
+        trimmedName === originalUsername.trim() &&
+        profileImage === originalProfileImage;
+    
     if (!trimmedName) {
       showToast("Username cannot be empty.", "error");
       return;
     }
 
-    if (trimmedName === originalUsername.trim()) {
-      showToast("No changes detected.", "success");
+    if (noChanges) {
+      showToast("No changes detected.", "error");
       return;
     }
 
@@ -126,32 +141,70 @@ export default function ProfileEdit() {
 
       const recordKey = userKey ?? user.uid;
       const userRef = ref(database, `users/${recordKey}`);
-      await update(userRef, { userName: trimmedName });
+      await update(userRef, { userName: trimmedName, profilePicture: profileImage ?? "", });
       await updateProfile(user, { displayName: trimmedName });
       setOriginalUsername(trimmedName);
-      showToast("Username updated successfully.", "success");
+      showToast("Profile updated successfully.", "success");
       setTimeout(() => router.back(), 500);
     } catch (error: any) {
-      console.warn("Save username failed", error);
+      console.warn("Save Profile failed", error);
       showToast(error.message ?? "Update failed.", "error");
     } finally {
       setSaving(false);
     }
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setProfileImage(result.assets[0].uri);
+    }
+  };
+
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
-      <BackHeader title="Edit Profile" />
+      <AppHeader 
+        title="Edit Profile"
+        leftIcon="arrow-back-outline"
+        onLeftPress={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? (
-          <ActivityIndicator color={colors.text} size="large" />
-        ) : (
+          <View style={styles.loadingContainer}>
+            <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+            <ActivityIndicator color={colors.text} size="large" />
+          </View>
+          ) : (
           <>
+           {/* Upload Avatar */}
+          <View style={styles.avatarSection}>
+            <ProfileAvatar
+              imageUri={profileImage}
+              username={username}
+              size={150}
+              onPress={pickImage}
+              badgeIcon="camera"
+            />
+            <Text style={[styles.username, { color:colors.text, }]}> {username} </Text>
+            <Text style={[ styles.avatarDescription, { color:colors.navDefaultIcon}]}>
+              Change your avatar to personalize your profile.
+            </Text>
+          </View>
+
+          <AppCard>
            {/* Edit Username */}
-            <Text style={[styles.subtitle, { color: colors.navDefaultIcon }]}>Enter the username you want to use in your profile.</Text>
+            <Text style={[styles.subtitle, { color: colors.text }]}>Username</Text>
             <AppInput placeholder="Username" icon="person-outline" value={username} onChangeText={setUsername} />
-            <AppButton title={saving ? "Saving..." : "Save Profile"} icon="checkmark-done-outline" onPress={saveUsername} />
+          </AppCard>
+
+          <AppButton title={saving ? "Saving..." : "Save Profile"} icon="checkmark-done-outline" onPress={saveProfile} />  
           </>
         )}
       </ScrollView>
@@ -176,14 +229,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 120,
     gap: 16,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    minHeight: 280,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  loadingText: {
+    fontSize: 24,
+    fontWeight: "600",
+    fontFamily: "Baloo2",
   },
   
   subtitle: {
     fontSize: 14,
     fontFamily: "Baloo2",
+  },
+
+  avatarSection:{
+   alignItems: "center",
+   gap: 10,
+  },
+
+  username:{
+    fontSize: 28,
+    fontFamily: "Baloo2",
+    fontWeight: "600",
+  },
+
+  avatarDescription:{
+    fontSize: 14,
+    fontFamily: "Baloo2",
+    textAlign: "center",
   },
 });
