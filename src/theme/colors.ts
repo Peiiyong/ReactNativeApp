@@ -22,6 +22,7 @@ export const Colors = {
     activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
 
     // box color
+    boxDefault: "#F4F7FF",
     boxBlue: "#1E3A8A",
     boxBlueBorder: "#60A5FA",
     boxPurple: "#4C1D95",
@@ -65,6 +66,7 @@ export const Colors = {
     activeIconBorder: ["#8B5CF6", "#EC4899", "#F59E0B"] as const,
 
     // box color
+    boxDefault: "#F4F7FF",
     boxBlue: "#1E3A8A",
     boxBlueBorder: "#60A5FA",
     boxPurple: "#4C1D95",

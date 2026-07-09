@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from "react-native";
 import { useThemeColors } from "../theme/useThemeColors";
 
 type ProfileAvatarProps = {
   imageUri?: string | null;
+  localImage?: ImageSourcePropType;
   username?: string;
   size?: number;
   onPress?: () => void;
@@ -13,6 +14,7 @@ type ProfileAvatarProps = {
 
 export default function ProfileAvatar({
   imageUri,
+  localImage,
   username = "User",
   size = 104,
   onPress,
@@ -26,12 +28,17 @@ export default function ProfileAvatar({
     <Pressable onPress={onPress} disabled={!onPress}>
       <View style={styles.container}>
         <View style={[styles.gradient ]}>
-            {imageUri ? (
+          {localImage ? (
             <Image
-                source={{ uri:imageUri}}
-                style={[ styles.image,{ width:size, height:size, borderRadius:radius }, ]}
+              source={localImage}
+              style={[ styles.image,{ width:size, height:size, borderRadius:radius }]}
             />
-            ) : (
+          ) : imageUri ? (
+            <Image
+              source={{ uri:imageUri }}
+              style={[ styles.image,{ width:size, height:size, borderRadius:radius }]}
+            />
+          ) : (
             <Text
                 style={[
                 styles.avatarText,
