@@ -97,87 +97,115 @@ export default function FoodCatchingGame() {
         return () => subscription.remove();
     }, [gameActive]);
 
-    // 45 FPS game loop for falling items
+    // useRef to sync the latest basketX value for the game loop
+    const basketXRef = useRef(basketX);
+    useEffect(() => {
+        basketXRef.current = basketX;
+    }, [basketX]);
+
+    //smooth game loop with requestAnimationFrame
     useEffect(() => {
         if (!gameActive) return;
 
-        const gameInterval = setInterval(() => {
+        let animationFrameId: number;
+        let lastSpawnTime = Date.now(); // use timestamp to control item spawn rate
+
+        const gameLoop = () => {
             setItems((prevItems) => {
                 let isGameOverFromBomb = false;
+                let scoreDelta = 0; // record score change in this frame
 
+                // move items down
                 const movedItems = prevItems.map((item) => ({
                     ...item,
                     y: item.y + item.speed,
                 }));
 
                 const basketY = gameHeight - 50;
+                const currentBasketX = basketXRef.current;
 
+                // collision detection and scoring
                 const remainingItems = movedItems.filter((item) => {
                     const hitBasket =
                         item.y + ITEM_SIZE >= basketY &&
                         item.y <= basketY + BASKET_HEIGHT &&
-                        item.x + ITEM_SIZE >= basketX &&
-                        item.x <= basketX + BASKET_WIDTH;
+                        item.x + ITEM_SIZE >= currentBasketX &&
+                        item.x <= currentBasketX + BASKET_WIDTH;
 
                     if (hitBasket) {
                         if (item.type === "food") {
-                            setScore((prev) => prev + 5);
+                            scoreDelta += 5;
                         } else if (item.type === "golden_food") {
-                            setScore((prev) => prev + 20);
+                            scoreDelta += 20;
                         } else if (item.type === "bomb") {
-                            setScore((prev) => {
-                                const nextScore = prev - 15;
-                                if (nextScore <= 0) {
-                                    isGameOverFromBomb = true; // game over if score drops to 0 or below
-                                    return 0;
-                                }
-                                return nextScore;
-                            });
+                            scoreDelta -= 15;
                         }
                         return false;
                     }
-                    return item.y < SCREEN_HEIGHT;
+                    return item.y < SCREEN_HEIGHT; // keep items that have fallen off the screen
                 });
 
+                if (scoreDelta !== 0) {
+                    const nextScore = scoreRef.current + scoreDelta;
+                    if (nextScore <= 0 && scoreDelta < 0) {
+                        isGameOverFromBomb = true;
+                    }
+                    setTimeout(() => {
+                        setScore(() => Math.max(0, nextScore));
+                    }, 0);
+                }
+
                 if (isGameOverFromBomb) {
-                    clearInterval(gameInterval);
+                    cancelAnimationFrame(animationFrameId);
                     setGameActive(false);
                     setTimeout(() => handleGameEndSettlement("lose"), 10);
                     return [];
                 }
 
-                // randomly spawn new items based on difficulty
-                if (Math.random() < 0.08) {
-                    const rand = Math.random();
-                    let type: "food" | "bomb" | "golden_food" = "food";
-                    let speed = config?.difficulty === "hard" ? 11 : config?.difficulty === "medium" ? 8 : 5;
+                // control item spawn rate and type
+                const now = Date.now();
+                if (now - lastSpawnTime > 350) { // every 350 milliseconds try to spawn an item
+                    lastSpawnTime = now;
 
-                    if (rand < 0.26) {
-                        type = "bomb";
-                        speed += Math.random() * 2;
-                    } else if (rand < 0.38) {
-                        type = "golden_food";
-                        speed = speed * 2.3;
-                    } else {
-                        type = "food";
-                        speed += Math.random() * 2;
+                    if (Math.random() < 0.7) { // 70% chance to spawn an item
+                        const rand = Math.random();
+                        let type: "food" | "bomb" | "golden_food" = "food";
+                        let speed = config?.difficulty === "hard" ? 11 : config?.difficulty === "medium" ? 8 : 5;
+
+                        if (rand < 0.26) {
+                            type = "bomb";
+                            speed += Math.random() * 2;
+                        } else if (rand < 0.38) {
+                            type = "golden_food";
+                            speed = speed * 2.3;
+                        } else {
+                            type = "food";
+                            speed += Math.random() * 2;
+                        }
+
+                        remainingItems.push({
+                            id: Date.now() + Math.random(),
+                            x: Math.random() * (SCREEN_WIDTH - ITEM_SIZE),
+                            y: 0,
+                            type,
+                            speed,
+                        });
                     }
-
-                    remainingItems.push({
-                        id: Date.now() + Math.random(),
-                        x: Math.random() * (SCREEN_WIDTH - ITEM_SIZE),
-                        y: 0,
-                        type,
-                        speed,
-                    });
                 }
 
                 return remainingItems;
             });
-        }, 1000 / 45);
 
-        return () => clearInterval(gameInterval);
-    }, [gameActive, basketX, config]);
+            // continue the game loop
+            animationFrameId = requestAnimationFrame(gameLoop);
+        };
+
+        // start the game loop
+        animationFrameId = requestAnimationFrame(gameLoop);
+
+        // cleanup on unmount or when gameActive changes
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [gameActive, config, gameHeight]);
 
     // Countdown timer
     useEffect(() => {
