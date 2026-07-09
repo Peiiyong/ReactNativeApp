@@ -50,7 +50,7 @@ export const Colors = {
     cardBackground: ["#6227bb", "#6030a9", "#3d1452"] as const,
 
     // text and button
-    titleText: "#ffffff",
+    titleText: "#4C1D95",
     titleTextShadow: "#b06cf0",
     text: "#FFFFFF",
     text2: "#FFFFFF",

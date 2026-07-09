@@ -1,12 +1,14 @@
+import AppButton from "@/components/AppButton";
+import AppInput from "@/components/AppInput";
+import ProfileAvatar from "@/components/ProfileAvatar";
+import Toast from "@/components/Toast";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { get, ref, set } from "firebase/database";
 import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
 import { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
-import AppButton from "../components/AppButton";
-import AppInput from "../components/AppInput";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, database, storage } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -18,12 +20,25 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
+  const [registering, setRegistering] = useState(false);
+
+  // Toast state — same pattern as ProfileEdit
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success" as "success" | "error",
+  });
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
+    setToast({ visible: true, message, type });
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -47,16 +62,16 @@ export default function Register() {
 
   const register = async () => {
     if (!email || !password || !confirmPassword || !username) {
-      setIsError(true);
-      setMessage("Please complete all required fields.");
+      showToast("Please complete all required fields.", "error");
       return;
     }
 
     if (password !== confirmPassword) {
-      setIsError(true);
-      setMessage("Passwords do not match.");
+      showToast("Passwords do not match.", "error");
       return;
     }
+
+    setRegistering(true);
 
     try {
       // 1. Create Auth User
@@ -85,19 +100,18 @@ export default function Register() {
         const userData = snapshot.val();
         const keys = Object.keys(userData).filter(key => key.startsWith("U"));
         if (keys.length > 0) {
-          keys.sort(); 
-          const lastKey = keys[keys.length - 1]; 
-          const lastNum = parseInt(lastKey.substring(1), 10); 
-          nextId = `U${String(lastNum + 1).padStart(5, '0')}`; 
+          keys.sort();
+          const lastKey = keys[keys.length - 1];
+          const lastNum = parseInt(lastKey.substring(1), 10);
+          nextId = `U${String(lastNum + 1).padStart(5, '0')}`;
         }
       }
 
       // 2. Create User Profile in Realtime Database
-      const userRef = ref(database, `users/${nextId}`); 
-      
-      console.log("Saving user profile to Realtime Database:", userRef.toString());
+      const userRef = ref(database, `users/${nextId}`);
+
       await set(userRef, {
-        userId: nextId,      
+        userId: nextId,
         authUid: user.uid,        // save the Firebase Auth UID for reference
         email,
         userName: username,
@@ -107,102 +121,158 @@ export default function Register() {
         currentPoints: 0,
         createdAt: Date.now(),
       });
-      
-      console.log("User profile saved successfully for:", nextId);
 
-      setIsError(false);
-      setMessage("Registration successful!");
-      router.replace("/home");
+      showToast("Registration successful!", "success");
+      setTimeout(() => router.replace("/home"), 500);
     } catch (error: any) {
-      setIsError(true);
       console.log("Registration error:", error);
       switch (error.code) {
         case "auth/email-already-in-use":
-          setMessage("Email is already in use.");
+          showToast("Email is already in use.", "error");
           break;
         case "auth/invalid-email":
-          setMessage("Invalid email address.");
+          showToast("Invalid email address.", "error");
           break;
         case "auth/weak-password":
-          setMessage("Password should be at least 6 characters.");
+          showToast("Password should be at least 6 characters.", "error");
           break;
         default:
-          setMessage(`Registration failed: ${error.message || error.code || "Unknown error"}`);
+          showToast(`Registration failed: ${error.message || error.code || "Unknown error"}`, "error");
       }
+    } finally {
+      setRegistering(false);
     }
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 20, gap: 10, backgroundColor: colors.background }}>
-      <Text style={{ fontSize: 50, fontWeight: "bold", color: colors.text, fontFamily: "Righteous", marginBottom: 30, textAlign: "center" }}>R E G I S T E R</Text>
+    <View style={[styles.container, { backgroundColor: colors.text2 }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={[styles.title, { color: colors.text3 }]}>R E G I S T E R</Text>
 
-      <TouchableOpacity onPress={pickImage}>
-        <Image
-          source={
-            imageUri
-              ? { uri: imageUri }
-              : require("../../assets/images/default-profile.jpg")
-          }
-          style={{
-            width: 100,
-            height: 100,
-            borderRadius: 50,
-            alignSelf: "center",
-            borderWidth: 2,
-            borderColor: "#ccc",
-          }}
+        {/* Upload Avatar — same pattern as ProfileEdit */}
+        <View style={styles.avatarSection}>
+          <ProfileAvatar
+            imageUri={imageUri}
+            username={username || "New Player"}
+            size={140}
+            onPress={pickImage}
+            badgeIcon="camera"
+          />
+          <Text style={[styles.avatarDescription, { color: colors.navDefaultIcon }]}>
+            Tap to add a profile picture.
+          </Text>
+        </View>
+
+        <View style={styles.form}>
+          <AppInput
+            placeholder="Username"
+            icon="person-outline"
+            value={username}
+            onChangeText={setUsername}
+          />
+
+          <AppInput
+            placeholder="Email"
+            icon="mail-outline"
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <AppInput
+            placeholder="Password"
+            icon="lock-closed-outline"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+
+          <AppInput
+            placeholder="Confirm Password"
+            icon="lock-closed-outline"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+          />
+        </View>
+
+        <AppButton
+          title={registering ? "Registering..." : "REGISTER"}
+          icon="person-add-outline"
+          onPress={register}
         />
-      </TouchableOpacity>
 
-      <AppInput
-        placeholder="Username"
-        icon="person-outline"
-        value={username}
-        onChangeText={setUsername}
+        <View style={styles.loginRow}>
+          <Text style={[styles.loginLink, { color: colors.text3 }]}>Already have an account? </Text>
+          <Text
+            onPress={() => router.push("/login")}
+            style={[styles.loginLink, { color: colors.primary }]}
+          >
+            Login now!
+          </Text>
+        </View>
+      </ScrollView>
+
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() =>
+          setToast((prev) => ({
+            ...prev,
+            visible: false,
+          }))
+        }
       />
-
-      <AppInput
-        placeholder="Email"
-        icon="mail-outline"
-        value={email}
-        onChangeText={setEmail}
-      />
-
-      <AppInput
-        placeholder="Password"
-        icon="lock-closed-outline"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <AppInput
-        placeholder="Confirm Password"
-        icon="lock-closed-outline"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-
-      <AppButton
-        title="REGISTER"
-        icon="person-add-outline"
-        onPress={register}
-      />
-
-      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10, gap: 5 }}>
-        <Text style={{ color: colors.text }}> Already have an account?{" "}</Text>
-
-        <Text onPress={() => router.push("/login")} style={{ color: colors.text, fontWeight: "bold", }}>
-          Login now!
-        </Text>
-      </View>
-
-      {message !== "" && (
-        <Text style={{ color: isError ? colors.errorMsg : colors.successMsg, textAlign: "center", fontWeight: "600", }}>
-          {message}
-        </Text>
-      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    gap: 16,
+  },
+
+  title: {
+    fontSize: 42,
+    fontWeight: "600",
+    fontFamily: "Baloo2",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+
+  avatarSection: {
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 6,
+  },
+
+  avatarDescription: {
+    fontSize: 13,
+    fontFamily: "Baloo2",
+    textAlign: "center",
+  },
+
+  form: {
+    gap: 10,
+  },
+
+  loginRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+  },
+
+  loginLink: {
+    fontWeight: "600",
+    fontFamily: "Baloo2",
+  },
+});

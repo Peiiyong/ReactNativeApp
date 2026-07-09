@@ -37,7 +37,7 @@ export default function Splash() {
     <Animated.View
       entering={FadeIn.duration(600)}
       exiting={FadeOut.duration(500)}
-      style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center", }}
+      style={{ flex: 1, backgroundColor: colors.text2, justifyContent: "center", alignItems: "center", }}
     >
       <View style={{ flexDirection: "row" }}>
         {title.split("").map((letter, index) => (

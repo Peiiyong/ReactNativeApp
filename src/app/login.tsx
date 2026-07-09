@@ -1,9 +1,10 @@
 import { router } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import AppButton from "../components/AppButton";
 import AppInput from "../components/AppInput";
+import Toast from "../components/Toast";
 import { auth } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -12,58 +13,75 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  // Toast state — same pattern as Register / ProfileEdit
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success" as "success" | "error",
+  });
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
+    setToast({ visible: true, message, type });
+  };
 
   const login = async () => {
-    try {
-    if (!email || !password ) {
-      setIsError(true);
-      setMessage("Please complete all required fields.");
+    if (!email || !password) {
+      showToast("Please complete all required fields.", "error");
       return;
     }
+
+    setLoggingIn(true);
+
+    try {
       await signInWithEmailAndPassword(auth, email, password);
-      setIsError(false);
-      setMessage("Login successful!");
-      router.replace("/home");
+      showToast("Login successful!", "success");
+      setTimeout(() => router.replace("/home"), 500);
     } catch (error: any) {
-      setIsError(true);
       switch (error.code) {
         case "auth/invalid-email":
-          setMessage("Invalid email address.");
+          showToast("Invalid email address.", "error");
           break;
 
         case "auth/invalid-credential":
-          setMessage("Incorrect email or password.");
+          showToast("Incorrect email or password.", "error");
           break;
 
         case "auth/user-not-found":
-          setMessage("Account not found.");
+          showToast("Account not found.", "error");
           break;
 
         case "auth/wrong-password":
-          setMessage("Incorrect password.");
+          showToast("Incorrect password.", "error");
           break;
 
         default:
-          setMessage("Login failed.");
+          showToast("Login failed.", "error");
       }
+    } finally {
+      setLoggingIn(false);
     }
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 20, gap: 10, backgroundColor: colors.background }}>
-      <Text style={{ fontSize: 50, fontWeight: "bold", color: colors.text, fontFamily: "Baloo2", marginBottom: 30, textAlign: "center" }}>L O G I N</Text>
+    <View style={[styles.container, { backgroundColor: colors.text2 }]}>
+      <Text style={[styles.title, { color: colors.text3 }]}>
+        L O G I N
+      </Text>
 
       <AppInput
-        placeholder="Email"
+        placeholder="Enter Email"
         icon="mail-outline"
         value={email}
         onChangeText={setEmail}
       />
 
       <AppInput
-        placeholder="Password"
+        placeholder="Enter Password"
         icon="lock-closed-outline"
         value={password}
         onChangeText={setPassword}
@@ -71,24 +89,72 @@ export default function Login() {
       />
 
       <AppButton
-        title="LOGIN"
+        title={loggingIn ? "Logging in..." : "LOGIN"}
         icon="log-in-outline"
         onPress={login}
       />
 
-      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10, gap: 5 }}>
-        <Text style={{ color: colors.text }}> Don't have an account?{" "}</Text>
+      <View style={styles.registerRow}>
+        <Text style={[styles.registerText, { color: colors.text3 }]}>
+          Don't have an account?
+        </Text>
 
-        <Text onPress={() => router.push("/register")} style={{ color: colors.text, fontWeight: "bold", }}>
+        <Text
+          onPress={() => router.push("/register")}
+          style={[styles.registerLink, { color: colors.primary }]}
+        >
           Create an Account!
         </Text>
       </View>
 
-      {message !== "" && (
-        <Text style={{ color: isError ? colors.errorMsg : colors.successMsg, textAlign: "center", fontWeight: "600",}}>
-          {message}
-        </Text>
-      )}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() =>
+          setToast((prev) => ({
+            ...prev,
+            visible: false,
+          }))
+        }
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    gap: 14,
+  },
+
+  title: {
+    fontSize: 48,
+    fontWeight: "600",
+    fontFamily: "Baloo2",
+    textAlign: "center",
+    marginBottom: 30,
+  },
+
+  registerRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+    gap: 5,
+    flexWrap: "wrap",
+  },
+
+  registerText: {
+    fontSize: 15,
+    fontFamily: "Baloo2",
+  },
+
+  registerLink: {
+    fontSize: 15,
+    fontWeight: "600",
+    fontFamily: "Baloo2",
+  },
+});
