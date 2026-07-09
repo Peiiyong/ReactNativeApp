@@ -1,7 +1,8 @@
 import AppHeader from "@/components/AppHeader";
 import AppLoading from "@/components/AppLoading";
-import BannerCarousel from "@/components/BannerCarousel";
+import BannerCarousel, { BannerCarouselRef } from "@/components/BannerCarousel";
 import BottomNavBar from "@/components/BottomNavBar";
+import GameCarousel from "@/components/GameCarousel";
 import LevelProgressBar from "@/components/LevelProgressBar";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import SectionHeader from "@/components/SectionHeader";
@@ -10,7 +11,7 @@ import { router } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { get, onValue, ref } from "firebase/database";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
+import { ActivityIndicator, Dimensions, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -38,9 +39,9 @@ type GameConfigItem = {
 };
 
 const bannerImages = [
-  require("../../assets/images/banner.jpg"),
-  require("../../assets/images/banner.jpg"),
-  require("../../assets/images/banner.jpg"),
+  require("../../assets/images/banner1.png"),
+  require("../../assets/images/banner2.png"),
+  require("../../assets/images/banner3.jpg"),
 ];
 
 export default function Home() {
@@ -54,7 +55,7 @@ export default function Home() {
 
   const { width } = Dimensions.get("window");
   const bannerWidth = width - 40;
-  const bannerRef = useRef<FlatList<number>>(null);
+  const bannerRef = useRef<BannerCarouselRef>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   const [games, setGames] = useState<GameItem[]>([]);
@@ -80,6 +81,11 @@ export default function Home() {
     type:"success"|"error"="success"
   )=>{
     setToast({ visible:true, message, type, });
+  };
+
+  // Function to slide banner
+  const goToNextBanner = () => {
+    bannerRef.current?.next();
   };
 
   // Get the data from level_config
@@ -287,12 +293,6 @@ export default function Home() {
     });
   };
 
-  const goToNextBanner = () => {
-    const nextIndex = (currentBannerIndex + 1) % bannerImages.length;
-    setCurrentBannerIndex(nextIndex);
-    bannerRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-  };
-
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
       <AppHeader title={`Hello, ${username}`} />
@@ -315,52 +315,15 @@ export default function Home() {
             </View>
           </View>
 
-          <SectionHeader title="Banner" buttonText="Next" icon="chevron-forward" onPress={goToNextBanner}/>
-          <BannerCarousel images={bannerImages}/>
+          <SectionHeader title="📢 Banner" buttonText="Next" icon="chevron-forward" onPress={goToNextBanner}/>
+          <BannerCarousel ref={bannerRef} images={bannerImages}/>
 
-          <View style={[styles.bannerCard, { backgroundColor: colors.cardBackground[0] }]}>
-              <FlatList
-                ref={bannerRef}
-                data={bannerImages}
-                keyExtractor={(_, index) => `banner-${index}`}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                getItemLayout={(_, index) => ({
-                  length: bannerWidth,
-                  offset: bannerWidth * index,
-                  index,
-                })}
-                onMomentumScrollEnd={(event) => {
-                  const nextIndex = Math.round(event.nativeEvent.contentOffset.x / bannerWidth);
-                  setCurrentBannerIndex(nextIndex);
-                }}
-                renderItem={({ item, index }) => (
-                  <View style={[styles.bannerSlide, { width: bannerWidth }]}>
-                    <Image source={item} style={styles.bannerImage} resizeMode="cover" />
-                    <View style={styles.bannerOverlay}>
-                      <Text style={styles.bannerText}>Banner {index + 1}</Text>
-                    </View>
-                  </View>
-                )}
-              />
+          <SectionHeader title="🕹️ Game" buttonText="Explore" icon="game-controller-outline" onPress={()=>router.push("/profile")}/>
+          <GameCarousel games={games} onGamePress={(game)=>startSelectedGame(game)} onMorePress={()=>router.push("/profile")}/>
 
-              <View style={styles.paginationRow}>
-                {bannerImages.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.paginationDot,
-                      { backgroundColor: index === currentBannerIndex ? colors.primary : colors.navDefaultIcon },
-                    ]}
-                  />
-                ))}
-              </View>
-            </View>
+          <SectionHeader title="🏆 Leaderboard" />
 
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Game</Text>
-            </View>
+
 
             <View style={styles.listBlock}>
               {games.map((game) => (
@@ -387,9 +350,6 @@ export default function Home() {
               ))}
             </View>
 
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Leaderboard</Text>
-            </View>
 
             <View style={styles.listBlock}>
               {leaderboardData.slice(0, 10).map((item, index) => (
@@ -497,62 +457,6 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
- 
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  nextButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  nextButtonText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  bannerCard: {
-    borderRadius: 24,
-    overflow: "hidden",
-  },
-  bannerSlide: {
-    height: 170,
-    position: "relative",
-  },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
-  },
-  bannerOverlay: {
-    position: "absolute",
-    left: 16,
-    bottom: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    backgroundColor: "rgba(0,0,0,0.35)",
-  },
-  bannerText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  paginationRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-  },
   listBlock: {
     gap: 14,
   },

@@ -25,7 +25,7 @@ export default function SectionHeader({
       {onPress && (
         <Pressable onPress={onPress}>
             <LinearGradient
-                colors={colors.buttonGradient}
+                colors={colors.activeIconBorder}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.button}
