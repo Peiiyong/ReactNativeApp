@@ -25,6 +25,14 @@ type FallingItem = {
     speed: number;
 };
 
+type FloatingText = {
+    id: number;
+    x: number;
+    y: number;
+    text: string;
+    color: string;
+};
+
 export default function FoodCatchingGame() {
     const colors = useThemeColors();
     const { gameConfigId } = useLocalSearchParams<{ gameConfigId: string }>();
@@ -41,13 +49,14 @@ export default function FoodCatchingGame() {
     const [items, setItems] = useState<FallingItem[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
+    const [isGoldenFlash, setIsGoldenFlash] = useState(false);
+    const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
+
     const startTimeRef = useRef<Date | null>(null);
     const hasSavedHistory = useRef(false);
 
-    // basket and item dimensions
     const BASKET_WIDTH = 90;
     const BASKET_HEIGHT = 20;
-    const BASKET_Y = SCREEN_HEIGHT - 220;
     const ITEM_SIZE = 35;
 
     const [gameHeight, setGameHeight] = useState(0);
@@ -56,6 +65,14 @@ export default function FoodCatchingGame() {
     useEffect(() => {
         scoreRef.current = score;
     }, [score]);
+
+    const triggerFloatingText = (x: number, y: number, text: string, color: string) => {
+        const id = Date.now() + Math.random();
+        setFloatingTexts((prev) => [...prev, { id, x, y, text, color }]);
+        setTimeout(() => {
+            setFloatingTexts((prev) => prev.filter((t) => t.id !== id));
+        }, 500);
+    };
 
     // get game config
     useEffect(() => {
@@ -82,13 +99,12 @@ export default function FoodCatchingGame() {
     useEffect(() => {
         if (!gameActive) return;
 
-        Accelerometer.setUpdateInterval(20); // make it 50Hz for smoother basket movement
+        Accelerometer.setUpdateInterval(20);
 
         const subscription = Accelerometer.addListener((accelerometerData) => {
             const { x } = accelerometerData;
 
             setBasketX((prevX) => {
-                // use a multiplier to make the basket move faster with tilt
                 const nextX = prevX - x * 24;
                 return Math.min(Math.max(0, nextX), SCREEN_WIDTH - BASKET_WIDTH);
             });
@@ -97,25 +113,23 @@ export default function FoodCatchingGame() {
         return () => subscription.remove();
     }, [gameActive]);
 
-    // useRef to sync the latest basketX value for the game loop
     const basketXRef = useRef(basketX);
     useEffect(() => {
         basketXRef.current = basketX;
     }, [basketX]);
 
-    //smooth game loop with requestAnimationFrame
+    // game loop
     useEffect(() => {
         if (!gameActive) return;
 
         let animationFrameId: number;
-        let lastSpawnTime = Date.now(); // use timestamp to control item spawn rate
+        let lastSpawnTime = Date.now();
 
         const gameLoop = () => {
             setItems((prevItems) => {
                 let isGameOverFromBomb = false;
-                let scoreDelta = 0; // record score change in this frame
+                let scoreDelta = 0;
 
-                // move items down
                 const movedItems = prevItems.map((item) => ({
                     ...item,
                     y: item.y + item.speed,
@@ -124,7 +138,6 @@ export default function FoodCatchingGame() {
                 const basketY = gameHeight - 50;
                 const currentBasketX = basketXRef.current;
 
-                // collision detection and scoring
                 const remainingItems = movedItems.filter((item) => {
                     const hitBasket =
                         item.y + ITEM_SIZE >= basketY &&
@@ -135,14 +148,19 @@ export default function FoodCatchingGame() {
                     if (hitBasket) {
                         if (item.type === "food") {
                             scoreDelta += 5;
+                            triggerFloatingText(item.x, basketY, "+5", "#10B981");
                         } else if (item.type === "golden_food") {
                             scoreDelta += 20;
+                            triggerFloatingText(item.x, basketY - 15, "💥 +20 ✨", "#FFD700");
+                            setIsGoldenFlash(true);
+                            setTimeout(() => setIsGoldenFlash(false), 350);
                         } else if (item.type === "bomb") {
                             scoreDelta -= 15;
+                            triggerFloatingText(item.x, basketY, "-15 💣", "#EF4444");
                         }
                         return false;
                     }
-                    return item.y < SCREEN_HEIGHT; // keep items that have fallen off the screen
+                    return item.y < SCREEN_HEIGHT;
                 });
 
                 if (scoreDelta !== 0) {
@@ -162,12 +180,11 @@ export default function FoodCatchingGame() {
                     return [];
                 }
 
-                // control item spawn rate and type
                 const now = Date.now();
-                if (now - lastSpawnTime > 350) { // every 350 milliseconds try to spawn an item
+                if (now - lastSpawnTime > 350) {
                     lastSpawnTime = now;
 
-                    if (Math.random() < 0.7) { // 70% chance to spawn an item
+                    if (Math.random() < 0.7) {
                         const rand = Math.random();
                         let type: "food" | "bomb" | "golden_food" = "food";
                         let speed = config?.difficulty === "hard" ? 11 : config?.difficulty === "medium" ? 8 : 5;
@@ -196,14 +213,10 @@ export default function FoodCatchingGame() {
                 return remainingItems;
             });
 
-            // continue the game loop
             animationFrameId = requestAnimationFrame(gameLoop);
         };
 
-        // start the game loop
         animationFrameId = requestAnimationFrame(gameLoop);
-
-        // cleanup on unmount or when gameActive changes
         return () => cancelAnimationFrame(animationFrameId);
     }, [gameActive, config, gameHeight]);
 
@@ -216,7 +229,7 @@ export default function FoodCatchingGame() {
                 if (prev <= 1) {
                     clearInterval(timer);
                     setGameActive(false);
-                    handleGameEndSettlement("win"); // win if time runs out
+                    handleGameEndSettlement("win");
                     return 0;
                 }
                 return prev - 1;
@@ -226,18 +239,16 @@ export default function FoodCatchingGame() {
         return () => clearInterval(timer);
     }, [gameActive]);
 
-    // start
     const handleStartGame = () => {
         setScore(0);
         setTimeLeft(config?.targetDuration || 30);
         setItems([]);
         setBasketX(SCREEN_WIDTH / 2 - 45);
         hasSavedHistory.current = false;
-        startTimeRef.current = new Date(); // record the start time for duration calculation
+        startTimeRef.current = new Date();
         setGameActive(true);
     };
 
-    // save game history to Firebase Realtime Database
     const handleGameEndSettlement = async (finalStatus: "win" | "lose") => {
         if (hasSavedHistory.current) return;
         hasSavedHistory.current = true;
@@ -250,8 +261,6 @@ export default function FoodCatchingGame() {
         }
 
         const finalScore = scoreRef.current;
-
-        // get the real user ID from Realtime Database mapping
         let realUserId = user.uid;
         try {
             const usersRef = ref(database, "users");
@@ -267,10 +276,8 @@ export default function FoodCatchingGame() {
             console.error("映射用户 ID 失败:", idError);
         }
 
-        // calculate earned points based on game result
         let earnedPoints = finalStatus === "win" ? finalScore : 0;
 
-        // calculate game duration
         const endTime = new Date();
         const durationMs = startTimeRef.current ? endTime.getTime() - startTimeRef.current.getTime() : 0;
         const totalSeconds = Math.max(1, Math.floor(durationMs / 1000));
@@ -279,7 +286,6 @@ export default function FoodCatchingGame() {
         const durationString = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 
         try {
-            // only update user points and level if the game was won
             if (finalStatus === "win" && earnedPoints > 0) {
                 const userRef = ref(database, `users/${realUserId}`);
                 const snapshot = await get(userRef);
@@ -289,10 +295,8 @@ export default function FoodCatchingGame() {
                     const currentExp = userData.exp || 0;
                     const currentLevel = userData.level || 1;
                     const currentPoints = userData.currentPoints || 0;
-
                     const newExp = currentExp + earnedPoints;
 
-                    // get the level config to determine if the user levels up
                     const levelRef = ref(database, "level_config");
                     const levelSnapshot = await get(levelRef);
                     let newLevel = currentLevel;
@@ -308,7 +312,6 @@ export default function FoodCatchingGame() {
                         }
                     }
 
-                    // sync the updated exp, points, and level back to the database
                     await update(userRef, {
                         exp: newExp,
                         currentPoints: currentPoints + earnedPoints,
@@ -317,19 +320,15 @@ export default function FoodCatchingGame() {
                 }
             }
 
-            // save the game history to user_history
             const historyRef = ref(database, `user_history/${realUserId}`);
             await push(historyRef, {
                 gameConfigId: configId,
-                gameStatus: finalStatus, // 'win' or 'lose'
+                gameStatus: finalStatus,
                 point: earnedPoints,
                 duration: durationString,
                 createdAt: endTime.getTime()
             });
 
-            console.log(`🎮 战绩已成功同步至 user_history! 结果为: ${finalStatus}, 分数: ${earnedPoints}`);
-
-            // show an alert to the user with the game result and options to play again or go home
             setTimeout(() => {
                 Alert.alert(
                     finalStatus === "win" ? "Victory!!" : "You Lose!",
@@ -351,7 +350,6 @@ export default function FoodCatchingGame() {
         }
     };
 
-    // reset game state for a new match
     const handleResetGame = () => {
         setItems([]);
         setBasketX(SCREEN_WIDTH / 2 - 45);
@@ -371,9 +369,7 @@ export default function FoodCatchingGame() {
     }
 
     return (
-        // same ui
         <LinearGradient colors={colors.innerBackground} style={styles.container}>
-
             <View style={[styles.statusCard, { backgroundColor: colors.cardBackground }]}>
                 <Text style={[styles.resultText, { color: colors.text }]}>
                     {gameActive ? "Catching Fruit Mode" : "Ready to Tilt?"}
@@ -391,6 +387,10 @@ export default function FoodCatchingGame() {
                 📱 Shake phone left or right to move the basket
             </Text>
 
+            <Text style={[styles.tipText, { color: colors.navDefaultIcon }]}>
+                🍎 +5 points    💣 -15 points   ✨ +20 points
+            </Text>
+
             <View
                 style={styles.gameArea}
                 onLayout={(e) => setGameHeight(e.nativeEvent.layout.height)}
@@ -405,7 +405,6 @@ export default function FoodCatchingGame() {
                     </TouchableOpacity>
                 )}
 
-                {/* render falling items */}
                 {items.map((item) => {
                     const isBomb = item.type === "bomb";
                     const isGolden = item.type === "golden_food";
@@ -418,7 +417,6 @@ export default function FoodCatchingGame() {
                                 {
                                     left: item.x,
                                     top: item.y,
-                                    // if it's a bomb, make it white with a black border; if golden food, make it gold; else red for normal food
                                     backgroundColor: isBomb
                                         ? "#FFFFFF"
                                         : isGolden
@@ -436,6 +434,12 @@ export default function FoodCatchingGame() {
                     );
                 })}
 
+                {floatingTexts.map((t) => (
+                    <View key={t.id} style={[styles.floatingTextContainer, { left: t.x, top: t.y }]}>
+                        <Text style={[styles.floatingText, { color: t.color }]}>{t.text}</Text>
+                    </View>
+                ))}
+
                 {gameHeight > 0 && (
                     <View
                         style={[
@@ -445,7 +449,13 @@ export default function FoodCatchingGame() {
                                 top: gameHeight - 50,
                                 width: BASKET_WIDTH,
                                 height: BASKET_HEIGHT,
-                                backgroundColor: colors.primary,
+                                backgroundColor: isGoldenFlash ? "#FFDF00" : colors.primary,
+                                shadowColor: isGoldenFlash ? "#FFD700" : "#000",
+                                shadowRadius: isGoldenFlash ? 20 : 3,
+                                shadowOpacity: isGoldenFlash ? 0.9 : 0.2,
+                                elevation: isGoldenFlash ? 10 : 4,
+                                borderWidth: isGoldenFlash ? 1.5 : 0,
+                                borderColor: "#FFF",
                             }
                         ]}
                     />
@@ -595,5 +605,18 @@ const styles = StyleSheet.create({
     secondaryBtnText: {
         fontSize: 16,
         fontWeight: '600',
+    },
+    floatingTextContainer: {
+        position: "absolute",
+        zIndex: 5,
+        width: 80,
+        alignItems: "center",
+    },
+    floatingText: {
+        fontSize: 18,
+        fontWeight: "900",
+        textShadowColor: "rgba(0,0,0,0.4)",
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
     },
 });
