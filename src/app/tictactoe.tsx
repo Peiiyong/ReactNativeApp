@@ -358,20 +358,16 @@ const TicTacToeGame = () => {
                 createdAt: endTime.getTime()
             });
 
-            if (!isForfeitQuit) {
-                setEndModalData({
-                    status: gameStatus,
-                    earnedPoints,
-                    leveledUp,
-                    newLevel: resultLevel,
-                    currentExp: resultExp,
-                    nextLevelExp: nextLevelExpAbs,
-                    expToNextLevel,
-                });
-                setEndModalVisible(true);
-            } else {
-                router.replace('/home');
-            }
+            setEndModalData({
+                status: gameStatus,
+                earnedPoints,
+                leveledUp,
+                newLevel: resultLevel,
+                currentExp: resultExp,
+                nextLevelExp: nextLevelExpAbs,
+                expToNextLevel,
+            });
+            setEndModalVisible(true);
 
         } catch (error) {
             console.error('Telemetry sync failed:', error);
@@ -516,7 +512,6 @@ const TicTacToeGame = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding:5
     },
     statusCard: {
         width: 250,

@@ -25,7 +25,7 @@ export default function AppInput({
   return (
     <LinearGradient colors={colors.activeIconBorder} style={styles.gradient}>
       <View
-        style={[ styles.container, { backgroundColor: colors.innerBackground[0]}]}
+        style={[ styles.container, { backgroundColor: colors.cardBackground[0]}]}
       >
         {icon && (
           <Ionicons

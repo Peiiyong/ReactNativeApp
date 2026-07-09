@@ -2,7 +2,7 @@ export const Colors = {
   light: {
     // background
     background: "#F4F7FF",
-    innerBackground: ["#FFFFFF","#E0F2FE","#C7D2FE"] as const,
+    innerBackground: ["#ccebff","#E0F2FE","#C7D2FE"] as const,
     cardBackground: ["#FFFFFF","#E0F2FE","#C7D2FE"] as const,
 
     // text and button 

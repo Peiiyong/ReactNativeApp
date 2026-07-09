@@ -94,8 +94,8 @@ export default function GameResultModal({
         )}
 
         <View style={styles.btnRow}>
-          <AppButton title="Exit" onPress={onExit} icon="exit-outline" />
           <AppButton title="Replay" onPress={onPlayAgain} icon="refresh" />
+          <AppButton title="Exit" onPress={onExit} icon="exit-outline" />
         </View>
       </View>
     </AppModal>
