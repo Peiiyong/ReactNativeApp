@@ -283,22 +283,23 @@ export default function Home() {
     setGameModalVisible(true);
   };
 
+  // Converts a game name into its route slug, e.g. "Tic Tac Toe" → "tictactoe"
+  const toRouteSlug = (name: string) => name.trim().toLowerCase().replace(/\s+/g, "");
+
   const handleStartGameConfig = (configId: string) => {
-    const currentGameId = selectedGame?.id;
+    if (!selectedGame) {
+      console.warn("No game selected");
+      return;
+    }
+
+    const targetPath = `/${toRouteSlug(selectedGame.gameName)}`;
 
     setGameModalVisible(false);
     setSelectedGame(null);
 
-    const gameRoutes: { [key: string]: string } = {
-      "1": "/tictactoe",
-      "2": "/foodcatching",
-    };
-
-    const targetPath = gameRoutes[String(currentGameId)] || "/tictactoe";
-
     router.push({
       pathname: targetPath as any,
-      params: {
+      params:{
         gameConfigId: configId,
       },
     });
