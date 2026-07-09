@@ -237,7 +237,7 @@ export default function Profile() {
 
             {/* Box */}
             <View style={styles.statsRow}>
-              <AppBox label="Point" value={currentPoints} backgroundColor= {colors.boxYellow} borderColor={colors.boxYellowBorder} />
+              <AppBox label="Current Point" value={currentPoints} backgroundColor= {colors.boxYellow} borderColor={colors.boxYellowBorder} />
               <AppBox label="Rank" value={level >= MAX_BADGE_LEVEL ? "🏆" : "⭐"} backgroundColor={colors.boxGreen} borderColor={colors.boxGreenBorder}/>
             </View>
           </View>

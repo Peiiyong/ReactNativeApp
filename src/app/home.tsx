@@ -1,22 +1,16 @@
+import AppHeader from "@/components/AppHeader";
+import AppLoading from "@/components/AppLoading";
+import BannerCarousel from "@/components/BannerCarousel";
 import BottomNavBar from "@/components/BottomNavBar";
+import LevelProgressBar from "@/components/LevelProgressBar";
+import ProfileAvatar from "@/components/ProfileAvatar";
+import SectionHeader from "@/components/SectionHeader";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { onValue, ref } from "firebase/database";
-import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { onAuthStateChanged } from "firebase/auth";
+import { get, onValue, ref } from "firebase/database";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Dimensions, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -51,22 +45,134 @@ const bannerImages = [
 
 export default function Home() {
   const colors = useThemeColors();
-  const bannerRef = useRef<FlatList<number>>(null);
+
   const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("User");
-  const [photoURL, setPhotoURL] = useState<string | null>(null);
-  const [level] = useState(1);
-  const [authReady, setAuthReady] = useState(false);
-  const [games, setGames] = useState<GameItem[]>([]);
-  const [selectedGame, setSelectedGame] = useState<GameItem | null>(null);
-  const [gameModalVisible, setGameModalVisible] = useState(false);
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const [gameConfigs, setGameConfigs] = useState<GameConfigItem[]>([]);
-  const [configsLoading, setConfigsLoading] = useState(true);
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardItem[]>([]);
+  const [username, setUsername] = useState("");
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const [level, setLevel] = useState(1);
+  const [exp, setExp] = useState(0);
 
   const { width } = Dimensions.get("window");
   const bannerWidth = width - 40;
+  const bannerRef = useRef<FlatList<number>>(null);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  const [games, setGames] = useState<GameItem[]>([]);
+  const [selectedGame, setSelectedGame] = useState<GameItem | null>(null);
+  const [gameModalVisible, setGameModalVisible] = useState(false);
+  const [gameConfigs, setGameConfigs] = useState<GameConfigItem[]>([]);
+  const [configsLoading, setConfigsLoading] = useState(true);
+
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardItem[]>([]);
+  
+  const [loading, setLoading] = useState(true);
+
+  // Toast state
+  const [toast, setToast] = useState({
+    visible:false,
+    message:"",
+    type:"success" as "success" | "error",
+  });
+
+  // Function to show toast message
+  const showToast = (
+    message:string,
+    type:"success"|"error"="success"
+  )=>{
+    setToast({ visible:true, message, type, });
+  };
+
+  // Get the data from level_config
+  const [nextLevelExp, setNextLevelExp] = useState(0);
+  useEffect(() => {
+    const loadLevelConfig = async () => {
+      const levelConfigRef = ref(database, "level_config");
+      const levelSnapshot = await get(levelConfigRef);
+
+      if(levelSnapshot.exists()){
+        type LevelConfigItem = {
+          level: number;
+          requiredPoint: number;
+        };
+
+        const configs = levelSnapshot.val() as Record<string, LevelConfigItem>;
+        const nextLevel = Object.values(configs).find(
+          (item) => item.level === level + 1
+        );
+
+        if(nextLevel){
+          setNextLevelExp(nextLevel.requiredPoint);
+        } else {
+          setNextLevelExp(0);
+        }
+      }
+    };
+    loadLevelConfig();
+  }, [level]);
+
+  // Get the user info from users
+  const loadUserProfile = useCallback(async () => {
+    setLoading(true);
+    const user = auth.currentUser;
+    if (!user) {
+      return;
+    }
+
+    try {
+      setEmail(user.email ?? "No email available");
+      setUsername(user.displayName ?? user.email?.split("@")[0] ?? "User");
+
+      const usersRef = ref(database, "users");
+      const snapshot = await get(usersRef);
+
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        const matchingKey = Object.keys(users).find((key) => users[key]?.authUid === user.uid);
+
+        if (matchingKey) {
+          const userData = users[matchingKey];
+          setUsername(userData.userName ?? userData.username ?? user.displayName ?? user.email?.split("@")[0] ?? "User");
+          setLevel(userData.level ?? 1);
+          setExp(userData.exp ?? 0);
+          setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
+          setEmail(userData.email ?? user.email ?? "No email available");
+        } else {
+          const directRef = ref(database, `users/${user.uid}`);
+          const directSnapshot = await get(directRef);
+          if (directSnapshot.exists()) {
+            const userData = directSnapshot.val();
+
+            setUsername(userData.userName ?? userData.username ?? user.displayName ?? user.email?.split("@")[0] ?? "User");
+            setLevel(userData.level ?? 1);
+            setExp(userData.exp ?? 0);
+            setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
+            setEmail(userData.email ?? user.email ?? "No email available");
+          } else {
+            setProfilePictureUrl(user.photoURL || user.photoURL || null);
+          }
+        }
+      } else {
+        const directRef = ref(database, `users/${user.uid}`);
+        const directSnapshot = await get(directRef);
+        if (directSnapshot.exists()) {
+          const userData = directSnapshot.val();
+
+          setUsername(userData.userName ?? userData.username ?? user.displayName ?? user.email?.split("@")[0] ?? "User");
+          setLevel(userData.level ?? 1);
+          setExp(userData.exp ?? 0);
+          setProfilePictureUrl(userData.profilePicture || user.photoURL || null);
+          setEmail(userData.email ?? user.email ?? "No email available");
+        } else {
+          setProfilePictureUrl(user.photoURL || user.photoURL || null);
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to load user data:", error);
+      showToast("Failed to load user info.", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -75,14 +181,11 @@ export default function Home() {
         return;
       }
 
-      setEmail(user.email ?? "No email available");
-      setDisplayName(user.displayName ?? user.email?.split("@")[0] ?? "User");
-      setPhotoURL(user.photoURL ?? null);
-      setAuthReady(true);
+      loadUserProfile();
     });
 
     return unsubscribe;
-  }, []);
+  }, [loadUserProfile]);
 
   useEffect(() => {
     const gamesRef = ref(database, "game");
@@ -158,11 +261,6 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  const logout = async () => {
-    await signOut(auth);
-    router.replace("/login");
-  };
-
   const startSelectedGame = (game: GameItem) => {
     setSelectedGame(game);
     setGameModalVisible(true);
@@ -175,16 +273,14 @@ export default function Home() {
     setSelectedGame(null);
 
     const gameRoutes: { [key: string]: string } = {
-      "1": "/tictactoe",       
-      "2": "/foodcatching", 
+      "1": "/tictactoe",
+      "2": "/foodcatching",
     };
 
     const targetPath = gameRoutes[String(currentGameId)] || "/tictactoe";
 
-    console.log(`🚀 弹窗选择成功！游戏ID: ${currentGameId}, 去往页面: ${targetPath}, 配置ID: ${configId}`);
-
     router.push({
-      pathname: targetPath as any, 
+      pathname: targetPath as any,
       params: {
         gameConfigId: configId,
       },
@@ -197,149 +293,131 @@ export default function Home() {
     bannerRef.current?.scrollToIndex({ index: nextIndex, animated: true });
   };
 
-  const avatarLetter = displayName.trim().charAt(0).toUpperCase() || "U";
-
-  if (!authReady) {
-    return (
-      <LinearGradient colors={colors.innerBackground} style={styles.container}>
-        <View style={styles.loadingWrap}>
-          <Text style={[styles.loadingText, { color: colors.text }]}>Loading home...</Text>
-        </View>
-      </LinearGradient>
-    );
-  }
-
   return (
     <LinearGradient colors={colors.innerBackground} style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.pageTitle, { color: colors.text }]}>Home</Text>
+      <AppHeader title={`Hello, ${username}`} />
 
-        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
-          <View style={styles.profileRow}>
-            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-              {photoURL ? (
-                <Image source={{ uri: photoURL }} style={styles.avatarImage} />
-              ) : (
-                <Text style={[styles.avatarText, { color: colors.text2 }]}>{avatarLetter}</Text>
-              )}
-            </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {loading ? (
+          <AppLoading />
+        ) : (
+          <View style={styles.content}>
 
+          <View style={styles.avatarSection}>
+            <ProfileAvatar
+              imageUri={profilePictureUrl}
+              username={username}
+              size={85}
+            />
             <View style={styles.profileTextWrap}>
-              <Text style={[styles.profileName, { color: colors.text }]}>{displayName}</Text>
-              <Text style={[styles.profileEmail, { color: colors.navDefaultIcon }]}>{email}</Text>
-
-              <View style={[styles.levelBadge, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.levelBadgeText, { color: colors.text2 }]}>Level {level}</Text>
-              </View>
+              <Text style={[styles.username, { color:colors.text }]}> {username} </Text>
+              <LevelProgressBar width={175} level={level} currentExp={exp} nextLevelExp={nextLevelExp}/>
             </View>
           </View>
-        </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Banner</Text>
-          <Pressable onPress={goToNextBanner} style={[styles.nextButton, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.nextButtonText, { color: colors.text2 }]}>Next</Text>
-          </Pressable>
-        </View>
+          <SectionHeader title="Banner" buttonText="Next" icon="chevron-forward" onPress={goToNextBanner}/>
+          <BannerCarousel images={bannerImages}/>
 
-        <View style={[styles.bannerCard, { backgroundColor: colors.cardBackground }]}>
-          <FlatList
-            ref={bannerRef}
-            data={bannerImages}
-            keyExtractor={(_, index) => `banner-${index}`}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            getItemLayout={(_, index) => ({
-              length: bannerWidth,
-              offset: bannerWidth * index,
-              index,
-            })}
-            onMomentumScrollEnd={(event) => {
-              const nextIndex = Math.round(event.nativeEvent.contentOffset.x / bannerWidth);
-              setCurrentBannerIndex(nextIndex);
-            }}
-            renderItem={({ item, index }) => (
-              <View style={[styles.bannerSlide, { width: bannerWidth }]}>
-                <Image source={item} style={styles.bannerImage} resizeMode="cover" />
-                <View style={styles.bannerOverlay}>
-                  <Text style={styles.bannerText}>Banner {index + 1}</Text>
-                </View>
-              </View>
-            )}
-          />
-
-          <View style={styles.paginationRow}>
-            {bannerImages.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.paginationDot,
-                  { backgroundColor: index === currentBannerIndex ? colors.primary : colors.navDefaultIcon },
-                ]}
+          <View style={[styles.bannerCard, { backgroundColor: colors.cardBackground[0] }]}>
+              <FlatList
+                ref={bannerRef}
+                data={bannerImages}
+                keyExtractor={(_, index) => `banner-${index}`}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                getItemLayout={(_, index) => ({
+                  length: bannerWidth,
+                  offset: bannerWidth * index,
+                  index,
+                })}
+                onMomentumScrollEnd={(event) => {
+                  const nextIndex = Math.round(event.nativeEvent.contentOffset.x / bannerWidth);
+                  setCurrentBannerIndex(nextIndex);
+                }}
+                renderItem={({ item, index }) => (
+                  <View style={[styles.bannerSlide, { width: bannerWidth }]}>
+                    <Image source={item} style={styles.bannerImage} resizeMode="cover" />
+                    <View style={styles.bannerOverlay}>
+                      <Text style={styles.bannerText}>Banner {index + 1}</Text>
+                    </View>
+                  </View>
+                )}
               />
-            ))}
-          </View>
-        </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Game</Text>
-        </View>
-
-        <View style={styles.listBlock}>
-          {games.map((game) => (
-            <Pressable key={game.id} onPress={() => startSelectedGame(game)}>
-              <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
-                <View style={styles.gameCardRow}>
-                  <View style={styles.gameTextWrap}>
-                    <Text style={[styles.gameName, { color: colors.text }]}>{game.gameName}</Text>
-                    <Text style={[styles.gameMeta, { color: colors.navDefaultIcon }]}>
-                      Required level {game.requiredLevel ?? 1}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.playBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.playBadgeText, { color: colors.text2 }]}>Start</Text>
-                  </View>
-                </View>
-
-                {game.gamePicture ? (
-                  <Image source={{ uri: game.gamePicture }} style={styles.gameImage} resizeMode="cover" />
-                ) : null}
-              </View>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Leaderboard</Text>
-        </View>
-
-        <View style={styles.listBlock}>
-          {leaderboardData.slice(0, 10).map((item, index) => (
-            <View key={item.id} style={[styles.card, { backgroundColor: colors.cardBackground }]}>
-              <View style={styles.leaderboardRow}>
-                <View style={[styles.rankBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.rankBadgeText, { color: colors.text2 }]}>{index + 1}</Text>
-                </View>
-
-                <View style={styles.leaderboardTextWrap}>
-                  <Text style={[styles.leaderboardName, { color: colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.leaderboardMeta, { color: colors.navDefaultIcon }]}>Level {item.level} · Exp {item.exp}</Text>
-                </View>
-
-                <Text style={[styles.scoreText, { color: colors.text }]}>{item.exp}</Text>
+              <View style={styles.paginationRow}>
+                {bannerImages.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.paginationDot,
+                      { backgroundColor: index === currentBannerIndex ? colors.primary : colors.navDefaultIcon },
+                    ]}
+                  />
+                ))}
               </View>
             </View>
-          ))}
-        </View>
+
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Game</Text>
+            </View>
+
+            <View style={styles.listBlock}>
+              {games.map((game) => (
+                <Pressable key={game.id} onPress={() => startSelectedGame(game)}>
+                  <View style={[styles.card, { backgroundColor: colors.cardBackground[0] }]}>
+                    <View style={styles.gameCardRow}>
+                      <View style={styles.gameTextWrap}>
+                        <Text style={[styles.gameName, { color: colors.text }]}>{game.gameName}</Text>
+                        <Text style={[styles.gameMeta, { color: colors.navDefaultIcon }]}>
+                          Required level {game.requiredLevel ?? 1}
+                        </Text>
+                      </View>
+
+                      <View style={[styles.playBadge, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.playBadgeText, { color: colors.text2 }]}>Start</Text>
+                      </View>
+                    </View>
+
+                    {game.gamePicture ? (
+                      <Image source={{ uri: game.gamePicture }} style={styles.gameImage} resizeMode="cover" />
+                    ) : null}
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Leaderboard</Text>
+            </View>
+
+            <View style={styles.listBlock}>
+              {leaderboardData.slice(0, 10).map((item, index) => (
+                <View key={item.id} style={[styles.card, { backgroundColor: colors.cardBackground[0] }]}>
+                  <View style={styles.leaderboardRow}>
+                    <View style={[styles.rankBadge, { backgroundColor: colors.primary }]}>
+                      <Text style={[styles.rankBadgeText, { color: colors.text2 }]}>{index + 1}</Text>
+                    </View>
+
+                    <View style={styles.leaderboardTextWrap}>
+                      <Text style={[styles.leaderboardName, { color: colors.text }]}>{item.name}</Text>
+                      <Text style={[styles.leaderboardMeta, { color: colors.navDefaultIcon }]}>Level {item.level} · Exp {item.exp}</Text>
+                    </View>
+
+                    <Text style={[styles.scoreText, { color: colors.text }]}>{item.exp}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       <BottomNavBar />
 
       <Modal visible={gameModalVisible} transparent animationType="fade" onRequestClose={() => setGameModalVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setGameModalVisible(false)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: colors.cardBackground }]} onPress={() => { }}>
+          <Pressable style={[styles.modalCard, { backgroundColor: colors.cardBackground[0] }]} onPress={() => { }}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Select Difficulty</Text>
             <Text style={{ fontSize: 14, color: colors.text, opacity: 0.7 }}>
               Choose your challenge level
@@ -351,7 +429,7 @@ export default function Home() {
               gameConfigs.filter((config) => config.gameId === selectedGame?.id).map((config) => (
                 <TouchableOpacity
                   key={config.id}
-                  style={[styles.configButton, { borderColor: colors.navDefaultIcon, backgroundColor: colors.cardBackground }]}
+                  style={[styles.configButton, { borderColor: colors.navDefaultIcon, backgroundColor: colors.cardBackground[0] }]}
                   onPress={() => handleStartGameConfig(config.id)}
                 >
                   <Text style={[styles.configTitle, { color: colors.text }]}>{config.difficulty.toUpperCase()}</Text>
@@ -383,72 +461,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  loadingWrap: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+
+  content: {
+    gap: 16,
   },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
+
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 120,
     gap: 16,
   },
-  pageTitle: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginTop: 60,
+
+  avatarSection:{
+    flexDirection: "row",
+    alignItems: "center",
+/*     paddingLeft: 40, */ 
+    gap: 5,
   },
+
+  profileTextWrap: {
+    flex: 1,
+  },
+
+  username:{
+    fontSize: 20,
+    fontFamily: "Baloo2",
+    fontWeight: "600",
+  },
+
+
+
   card: {
     borderRadius: 24,
     padding: 20,
     gap: 14,
   },
-  profileRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  avatar: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
-  },
-  avatarText: {
-    fontSize: 34,
-    fontWeight: "bold",
-  },
-  profileTextWrap: {
-    flex: 1,
-    gap: 8,
-  },
-  profileName: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  profileEmail: {
-    fontSize: 14,
-  },
-  levelBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  levelBadgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
+
+ 
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -585,18 +634,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  modalGameName: {
-    fontSize: 26,
-    fontWeight: "bold",
-  },
-  modalMeta: {
-    fontSize: 13,
-  },
-  modalImage: {
-    width: "100%",
-    height: 180,
-    borderRadius: 20,
-  },
   modalDescription: {
     fontSize: 14,
     lineHeight: 20,
@@ -614,16 +651,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalSecondaryButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  modalPrimaryButton: {
-    flex: 1,
-    borderRadius: 18,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  modalPrimaryButtonText: {
     fontSize: 14,
     fontWeight: "700",
   },
