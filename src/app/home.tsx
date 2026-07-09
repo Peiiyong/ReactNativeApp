@@ -272,6 +272,13 @@ export default function Home() {
   }, []);
 
   const startSelectedGame = (game: GameItem) => {
+    const required = game.requiredLevel ?? 1;
+
+    if (level < required) {
+      showToast(`Reach level ${required} to unlock ${game.gameName}!`, "error");
+      return;
+    }
+
     setSelectedGame(game);
     setGameModalVisible(true);
   };
@@ -322,8 +329,8 @@ export default function Home() {
           <SectionHeader title="📢 Banner" buttonText="Next" icon="chevron-forward" onPress={goToNextBanner}/>
           <BannerCarousel ref={bannerRef} images={bannerImages}/>
 
-          <SectionHeader title="🕹️ Game" buttonText="Explore" icon="game-controller-outline" onPress={()=>router.push("/profile")}/>
-          <GameCarousel games={games} onGamePress={(game)=>startSelectedGame(game)} onMorePress={()=>router.push("/profile")}/>
+          <SectionHeader title="🕹️ Game" buttonText="Explore" icon="game-controller-outline" onPress={()=>router.push("/game")}/>
+          <GameCarousel games={games} onGamePress={(game)=>startSelectedGame(game)} onMorePress={()=>router.push("/game")}/>
 
           <SectionHeader title="🏆 Leaderboard" />
           <LinearGradient colors={colors.cardBackground}style={styles.cardBorder}>
