@@ -547,7 +547,7 @@ export default function FoodCatchingGame() {
             </Text>
 
             <View
-                style={styles.gameArea}
+                style={[styles.gameArea,  { backgroundColor: colors.cardBackground[1] }]}
                 onLayout={(e) => setGameHeight(e.nativeEvent.layout.height)}
             >
                 {items.map((item) => {
