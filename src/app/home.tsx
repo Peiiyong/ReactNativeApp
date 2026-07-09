@@ -4,6 +4,7 @@ import BannerCarousel, { BannerCarouselRef } from "@/components/BannerCarousel";
 import BottomNavBar from "@/components/BottomNavBar";
 import GameCarousel from "@/components/GameCarousel";
 import GameModal from "@/components/GameModal";
+import Leaderboard from "@/components/Leaderboard";
 import LevelProgressBar from "@/components/LevelProgressBar";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import SectionHeader from "@/components/SectionHeader";
@@ -251,6 +252,7 @@ export default function Home() {
           const user = data[key] as any;
           return {
             id: key,
+            photo: user.profilePicture ?? user.photoURL ?? null,
             name: user.userName ?? user.username ?? user.email?.split("@")[0] ?? "User",
             level: user.level ?? 0,
             exp: user.exp ?? 0,
@@ -324,29 +326,11 @@ export default function Home() {
           <GameCarousel games={games} onGamePress={(game)=>startSelectedGame(game)} onMorePress={()=>router.push("/profile")}/>
 
           <SectionHeader title="🏆 Leaderboard" />
-
-
-
-
-
-            <View style={styles.listBlock}>
-              {leaderboardData.slice(0, 10).map((item, index) => (
-                <View key={item.id} style={[styles.card, { backgroundColor: colors.cardBackground[0] }]}>
-                  <View style={styles.leaderboardRow}>
-                    <View style={[styles.rankBadge, { backgroundColor: colors.primary }]}>
-                      <Text style={[styles.rankBadgeText, { color: colors.text2 }]}>{index + 1}</Text>
-                    </View>
-
-                    <View style={styles.leaderboardTextWrap}>
-                      <Text style={[styles.leaderboardName, { color: colors.text }]}>{item.name}</Text>
-                      <Text style={[styles.leaderboardMeta, { color: colors.navDefaultIcon }]}>Level {item.level} · Exp {item.exp}</Text>
-                    </View>
-
-                    <Text style={[styles.scoreText, { color: colors.text }]}>{item.exp}</Text>
-                  </View>
-                </View>
-              ))}
+          <LinearGradient colors={colors.cardBackground}style={styles.cardBorder}>
+            <View style={styles.cardInner}>
+              <Leaderboard data={leaderboardData}/>
             </View>
+          </LinearGradient>
           </View>
         )}
       </ScrollView>
@@ -408,87 +392,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-
-
-  card: {
-    borderRadius: 24,
-    padding: 20,
-    gap: 14,
+  cardBorder:{
+    borderRadius:20,
+    padding:2,  
   },
 
-  listBlock: {
-    gap: 14,
-  },
-  gameCardRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  gameTextWrap: {
-    flex: 1,
-    gap: 6,
-  },
-  gameName: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  gameMeta: {
-    fontSize: 13,
-  },
-  playBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  playBadgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  gameImage: {
-    width: "100%",
-    height: 150,
-    borderRadius: 18,
-    marginTop: 6,
-  },
-  leaderboardRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  rankBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rankBadgeText: {
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  leaderboardTextWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  leaderboardName: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  leaderboardMeta: {
-    fontSize: 13,
-  },
-  scoreText: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
-
-tle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  configMeta: {
-    fontSize: 13,
-    marginTop: 6,
+  cardInner:{
+    borderRadius:18,
+    padding:5,
+    borderWidth: 1,
+    borderColor: "#fff",
   },
 });
