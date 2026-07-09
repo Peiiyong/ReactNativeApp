@@ -41,7 +41,15 @@ export default function AppHeader({
       </View>
 
       {/* Title */}
-      <Text style={[ styles.title, { color: colors.text }]}> {title} </Text>
+      <View style={styles.titleContainer}>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.title, { color: colors.text }]}
+        >
+          {title}
+        </Text>
+      </View>
 
       {/* Right Icon */}
       <View style={styles.side}>
@@ -68,18 +76,18 @@ export default function AppHeader({
 }
 
 const styles = StyleSheet.create({
-  header:{
-    flexDirection:"row",
-    alignItems:"center",
-    justifyContent:"space-between",
-    paddingTop:60,
-    paddingHorizontal:20,
-    paddingBottom:20,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
 
-  side:{
-    width:52,
-    alignItems:"center",
+  side: {
+    width: 52,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   iconGradient:{
@@ -94,6 +102,12 @@ const styles = StyleSheet.create({
     borderRadius:16,
     alignItems:"center",
     justifyContent:"center",
+  },
+
+  titleContainer: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 10,
   },
 
   title:{

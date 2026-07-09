@@ -322,7 +322,12 @@ export default function Home() {
               size={85}
             />
             <View style={styles.profileTextWrap}>
-              <Text style={[styles.username, { color:colors.text }]}> {username} </Text>
+              <Text 
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.username, { color:colors.text }]}> 
+                {username} 
+              </Text>
               <LevelProgressBar width={175} level={level} currentExp={exp} nextLevelExp={nextLevelExp}/>
             </View>
           </View>
@@ -392,6 +397,7 @@ const styles = StyleSheet.create({
 
   profileTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
 
   username:{

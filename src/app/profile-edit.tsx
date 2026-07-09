@@ -246,6 +246,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: "Baloo2",
     fontWeight: "600",
+    textAlign: "center",
   },
 
   avatarDescription:{

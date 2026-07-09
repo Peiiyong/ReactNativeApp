@@ -71,7 +71,13 @@ export default function Leaderboard({
 
         <PlayerAvatar item={item} size={rank === 1 ? 80 : 60}/>
 
-        <Text numberOfLines={1} style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.name, { color: colors.text }]}
+        >
+          {item.name}
+        </Text>        
         <Text style={[styles.level, { color: colors.navDefaultIcon }]}>Level {item.level}</Text>
         <Text numberOfLines={1} style={[styles.exp, { color }]}>{item.exp} EXP</Text>
       </View>
@@ -96,7 +102,13 @@ export default function Leaderboard({
             <Text style={[styles.number, { color: colors.primary }]}>#{index + 4}</Text>
             <PlayerAvatar item={item} size={50} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.name, { color: colors.text }]}
+              >
+                {item.name}
+              </Text>
               <Text style={[styles.level, { color: colors.navDefaultIcon }]}>Level {item.level}</Text>
             </View>
 

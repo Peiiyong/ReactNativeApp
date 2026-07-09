@@ -230,7 +230,14 @@ export default function Profile() {
               badgeText={`Lv.${level}`}
             />
             {/* Username */}
-            <Text style={[styles.username, { color:colors.text }]}> {username} </Text>
+            <View style={styles.profileTextWrap}>
+              <Text 
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.username, { color:colors.text }]}> 
+                {username} 
+              </Text>
+            </View>
 
             {/* Level Progress */}
             <LevelProgressBar level={level} currentExp={exp} nextLevelExp={nextLevelExp}/>
@@ -246,7 +253,15 @@ export default function Profile() {
             <View style={styles.infoList}>
               <View style={styles.infoRow}>
                 <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Username</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>{username}</Text>
+                <View style={styles.infoUsernameWrap}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={[styles.infoValueLeft, { color: colors.text }]}
+                  >
+                    {username}
+                  </Text>
+                </View>
               </View>
               <View style={styles.infoRow}>
                 <Text style={[styles.infoLabel, { color: colors.navDefaultIcon }]}>Email</Text>
@@ -348,6 +363,17 @@ const styles = StyleSheet.create({
   avatarSection:{
    alignItems: "center",
    gap: 5,
+  },
+
+  profileTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  infoUsernameWrap: {
+    flex: 1,
+    minWidth: 0,    
+    alignItems: "flex-end",
   },
 
   username:{
