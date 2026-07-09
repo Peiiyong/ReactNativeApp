@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Dimensions, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useThemeColors } from "../theme/useThemeColors";
@@ -49,24 +48,23 @@ export default function GameCarousel({
           return (
             <Pressable  onPress={onMorePress} style={{ width: cardWidth }}>
               <LinearGradient colors={colors.cardBackground} style={styles.card}>
-                <View style={[ styles.moreContainer,{ backgroundColor: colors.primary }]}>
-                  <Ionicons
-                    name="add"
-                    size={35}
-                    color={colors.text2}
-                  />
+                <Image
+                source={require("../../assets/images/moreGame.png")}
+                style={styles.image}
+                resizeMode="cover"
+                />
+                <View style={styles.info}>
+                    <Text style={[ styles.gameName,{ color:colors.text }]}>🎮 More Games</Text>
+                    <Text style={[ styles.level,{ color: colors.navDefaultIcon }]}>Explore more games</Text>
                 </View>
-
-                <Text style={[ styles.moreGame,{ color:colors.text }]}>More Games</Text>
               </LinearGradient>
             </Pressable>
           );
         }
 
         return (
-          <Pressable
-            onPress={()=>onGamePress(item)}
-            style={[ styles.card, { width:cardWidth, backgroundColor: colors.cardBackground[0]}]} >
+          <Pressable onPress={()=>onGamePress(item)} style={{ width: cardWidth }}>
+            <LinearGradient colors={colors.cardBackground} style={styles.card}>
             {
               item.gamePicture ? (
                 <Image source={{  uri:item.gamePicture}}
@@ -86,6 +84,7 @@ export default function GameCarousel({
                 Lv.{item.requiredLevel ?? 1}
               </Text>
             </View>
+            </LinearGradient>
           </Pressable>
         );
       }}
@@ -134,11 +133,4 @@ const styles = StyleSheet.create({
     justifyContent:"center",
     alignItems:"center",
   },
-
-  moreGame: {
-    fontSize:15,
-    fontWeight:"600",
-    fontFamily:"Baloo2",
-    textAlign:"center",
-  }
 });

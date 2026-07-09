@@ -3,15 +3,17 @@ import AppLoading from "@/components/AppLoading";
 import BannerCarousel, { BannerCarouselRef } from "@/components/BannerCarousel";
 import BottomNavBar from "@/components/BottomNavBar";
 import GameCarousel from "@/components/GameCarousel";
+import GameModal from "@/components/GameModal";
 import LevelProgressBar from "@/components/LevelProgressBar";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import SectionHeader from "@/components/SectionHeader";
+import Toast from "@/components/Toast";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { get, onValue, ref } from "firebase/database";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -325,30 +327,6 @@ export default function Home() {
 
 
 
-            <View style={styles.listBlock}>
-              {games.map((game) => (
-                <Pressable key={game.id} onPress={() => startSelectedGame(game)}>
-                  <View style={[styles.card, { backgroundColor: colors.cardBackground[0] }]}>
-                    <View style={styles.gameCardRow}>
-                      <View style={styles.gameTextWrap}>
-                        <Text style={[styles.gameName, { color: colors.text }]}>{game.gameName}</Text>
-                        <Text style={[styles.gameMeta, { color: colors.navDefaultIcon }]}>
-                          Required level {game.requiredLevel ?? 1}
-                        </Text>
-                      </View>
-
-                      <View style={[styles.playBadge, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.playBadgeText, { color: colors.text2 }]}>Start</Text>
-                      </View>
-                    </View>
-
-                    {game.gamePicture ? (
-                      <Image source={{ uri: game.gamePicture }} style={styles.gameImage} resizeMode="cover" />
-                    ) : null}
-                  </View>
-                </Pressable>
-              ))}
-            </View>
 
 
             <View style={styles.listBlock}>
@@ -374,45 +352,26 @@ export default function Home() {
       </ScrollView>
 
       <BottomNavBar />
+      
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() =>
+          setToast(prev=>({
+            ...prev,
+            visible:false
+          }))
+        }
+      />
 
-      <Modal visible={gameModalVisible} transparent animationType="fade" onRequestClose={() => setGameModalVisible(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setGameModalVisible(false)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: colors.cardBackground[0] }]} onPress={() => { }}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Select Difficulty</Text>
-            <Text style={{ fontSize: 14, color: colors.text, opacity: 0.7 }}>
-              Choose your challenge level
-            </Text>
-
-            {configsLoading ? (
-              <ActivityIndicator size="large" color={colors.text} style={{ marginVertical: 20 }} />
-            ) : (
-              gameConfigs.filter((config) => config.gameId === selectedGame?.id).map((config) => (
-                <TouchableOpacity
-                  key={config.id}
-                  style={[styles.configButton, { borderColor: colors.navDefaultIcon, backgroundColor: colors.cardBackground[0] }]}
-                  onPress={() => handleStartGameConfig(config.id)}
-                >
-                  <Text style={[styles.configTitle, { color: colors.text }]}>{config.difficulty.toUpperCase()}</Text>
-                  <Text style={[styles.configMeta, { color: colors.navDefaultIcon }]}>Reward: {config.point} | Target: {config.targetDuration}s</Text>
-                </TouchableOpacity>
-              ))
-            )}
-
-            {!configsLoading && selectedGame && gameConfigs.filter((config) => config.gameId === selectedGame.id).length === 0 ? (
-              <Text style={[styles.modalDescription, { color: colors.text }]}>No difficulty options available for this game.</Text>
-            ) : null}
-
-            <View style={styles.modalActions}>
-              <Pressable style={[styles.modalSecondaryButton, { borderColor: colors.navDefaultIcon }]} onPress={() => {
-                setGameModalVisible(false);
-                setSelectedGame(null);
-              }}>
-                <Text style={[styles.modalSecondaryButtonText, { color: colors.text }]}>Cancel</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <GameModal
+          visible={gameModalVisible}
+          configs={gameConfigs.filter(config=>config.gameId===selectedGame?.id)}
+          loading={configsLoading}
+          onClose={()=>{setGameModalVisible(false)}}
+          onSelect={handleStartGameConfig}
+      />
     </LinearGradient>
   );
 }
@@ -523,49 +482,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalCard: {
-    borderRadius: 28,
-    padding: 20,
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  modalDescription: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 4,
-  },
-  modalSecondaryButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 18,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  modalSecondaryButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  configButton: {
-    borderWidth: 1,
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 12,
-  },
-  configTitle: {
+
+tle: {
     fontSize: 16,
     fontWeight: "700",
   },
