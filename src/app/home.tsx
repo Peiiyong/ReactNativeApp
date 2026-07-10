@@ -274,6 +274,8 @@ export default function Home() {
   const startSelectedGame = (game: GameItem) => {
     const required = game.requiredLevel ?? 1;
 
+    console.log(`HOME PAGE: User name: ${username}, User level: ${level}, Reuired Level for ${game.gameName}: ${required}`);
+
     if (level < required) {
       showToast(`Reach level ${required} to unlock ${game.gameName}!`, "error");
       return;

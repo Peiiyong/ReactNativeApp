@@ -59,26 +59,36 @@ export default function Game() {
   };
 
   const loadUserLevel = useCallback(async () => {
-    setLoading(true);
-    const user = auth.currentUser;
-    if (!user) {
-      return;
-    }
+      setLoading(true);
+      const user = auth.currentUser;
+      if (!user) {
+          return;
+      }
 
-    try {
-      const directRef = ref(database, `users/${user.uid}`);
-      onValue(directRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          setUserLevel(userData.level ?? 1);
-        }
-        setLoading(false);
-      });
-    } catch (error) {
-      console.warn("Failed to load user level:", error);
-      showToast("Failed to load user info.", "error");
-      setLoading(false);
-    }
+      try {
+          const usersRef = ref(database, "users");
+          const unsubscribe = onValue(usersRef, (snapshot) => {
+              if (snapshot.exists()) {
+                  const users = snapshot.val();
+                  const matchingKey = Object.keys(users).find(
+                      (key) => users[key]?.authUid === user.uid
+                  );
+
+                  if (matchingKey) {
+                      setUserLevel(users[matchingKey].level ?? 1);
+                  } else {
+                      console.warn(`No user data found for auth uid: ${user.uid}`);
+                  }
+              }
+              setLoading(false);
+          });
+
+          return unsubscribe;
+      } catch (error) {
+          console.warn("Failed to load user level:", error);
+          showToast("Failed to load user info.", "error");
+          setLoading(false);
+      }
   }, []);
 
   useEffect(() => {
@@ -139,6 +149,8 @@ export default function Game() {
   // Level check happens before the modal is ever shown
   const startSelectedGame = (game: GameItem) => {
     const required = game.requiredLevel ?? 1;
+
+    console.log(`GAME PAGE: User level: ${userLevel}, Reuired Level for ${game.gameName}: ${required}`);
 
     if (userLevel < required) {
       showToast(`Reach level ${required} to unlock ${game.gameName}!`, "error");
@@ -223,7 +235,7 @@ export default function Game() {
                         { color: locked ? colors.errorMsg : colors.navDefaultIcon },
                       ]}
                     >
-                      {locked ? `🔒 Lv.${required}` : `Lv.${required}+`}
+                      {locked ? `🔒 Lv.${required}` : `Lv.${required}`}
                     </Text>
                   </LinearGradient>
                 </Pressable>
