@@ -52,45 +52,46 @@ export default function Rewards() {
     setToast({ visible: true, message, type });
   };
 
-  // 核心改动：模仿队友的方案，全量读取并从前端 find 查找 matchingKey
   const loadUserData = useCallback(() => {
-    const user = auth.currentUser;
-    if (!user) return;
+      const user = auth.currentUser;
+      if (!user) return;
 
-    const usersRef = ref(database, "users");
+      const usersRef = ref(database, "users");
 
-    return onValue(usersRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const users = snapshot.val();
+      return onValue(usersRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const users = snapshot.val();
 
-        // 1:1 还原你队友的匹配逻辑，在前台寻找 authUid 与当前登录 uid 匹配的 key
-        const matchingKey = Object.keys(users).find(
-          (key) => users[key]?.authUid === user.uid
-        );
+          // First try: find a record whose authUid field matches (U0000X style)
+          let matchingKey = Object.keys(users).find(
+            (key) => users[key]?.authUid === user.uid
+          );
 
-        if (matchingKey) {
-          const data = users[matchingKey];
+          // Fallback: some older accounts have the auth uid as the key itself
+          if (!matchingKey && users[user.uid]) {
+            matchingKey = user.uid;
+          }
 
-          // 👇 这样改，直接显式获取里面的 userId 字段，看着更直观！
-          setCustomUserId(data.userId ?? matchingKey);
-
-          setUserData({
-            currentPoints: data.currentPoints ?? 0,
-            level: data.level ?? 1,
-          });
+          if (matchingKey) {
+            const data = users[matchingKey];
+            setCustomUserId(data.userId ?? matchingKey);
+            setUserData({
+              currentPoints: data.currentPoints ?? 0,
+              level: data.level ?? 1,
+            });
+          } else {
+            setCustomUserId(null);
+            console.warn(`No user data found for auth uid: ${user.uid}`);
+          }
         } else {
           setCustomUserId(null);
-          console.warn(`No user data found for auth uid: ${user.uid}`);
         }
-      } else {
-        setCustomUserId(null);
-      }
-      setLoading(false);
-    }, (error) => {
-      console.warn("Failed to load user data:", error);
-      showToast("Failed to load user info.", "error");
-      setLoading(false);
-    });
+        setLoading(false);
+      }, (error) => {
+        console.warn("Failed to load user data:", error);
+        showToast("Failed to load user info.", "error");
+        setLoading(false);
+      });
   }, []);
 
   // 修复改动：修复了原先监听器没有正确清理注销的逻辑 Bug
