@@ -90,7 +90,7 @@ export default function Rewards() {
     return unsubscribeAuth;
   }, [loadUserData]);
 
-  // 2. 监听奖励基础配置 (reward)
+  // get all rewards
   useEffect(() => {
     const rewardsRef = ref(database, "reward");
     const unsubscribe = onValue(rewardsRef, (snapshot) => {
@@ -113,9 +113,8 @@ export default function Rewards() {
     return () => unsubscribe();
   }, []);
 
-  // 3. 监听所有已兑换记录 (users_reward) 用于限购计算
+  // check user rewards for limit count and status
   useEffect(() => {
-    // 提示：如果你数据库里叫 userReward，请将此处对应的字符串改为 "userReward"
     const userRewardsRef = ref(database, "users_reward");
     const unsubscribe = onValue(userRewardsRef, (snapshot) => {
       const data = snapshot.val();
@@ -134,7 +133,7 @@ export default function Rewards() {
     return () => unsubscribe();
   }, []);
 
-  // 4. 处理购买/兑换逻辑
+  // buy or claim reward
   const handleClaimReward = async (reward: RewardItem) => {
     const user = auth.currentUser;
     if (!user || !customUserId) {
@@ -142,7 +141,7 @@ export default function Rewards() {
       return;
     }
 
-    // 核心改动：计算当前用户拥有的数量时，使用 customUserId (如 U00001) 比对
+    // check by userid
     const claimedCount = userRewards.filter(
       (ur) => ur.userId === customUserId && ur.rewardId === reward.id
     ).length;
@@ -153,13 +152,13 @@ export default function Rewards() {
     }
 
     if (reward.rewardType === 1) {
-      // 积分兑换检查
+      // check points for EXCHANGE
       if (userData.currentPoints < reward.targetValue) {
         showToast("Insufficient points!", "error");
         return;
       }
     } else if (reward.rewardType === 2) {
-      // 等级礼包检查
+      // check level for LEVEL_GIFT
       if (userData.level < reward.targetValue) {
         showToast(`Requires Level ${reward.targetValue} to unlock!`, "error");
         return;
@@ -169,34 +168,31 @@ export default function Rewards() {
     try {
       setLoading(true);
 
-      // 计算过期时间
+      // calculate expired date
       const expiredDate = new Date();
       expiredDate.setDate(expiredDate.getDate() + reward.expiredDuration);
 
-      // a. 准备更新的数据载荷
       const newUserRewardRef = push(ref(database, "users_reward"));
       const userRewardId = newUserRewardRef.key;
 
       const userRewardPayload = {
         userRewardId: userRewardId,
-        userId: customUserId, // 核心改动：将真实的 customUserId (如 U00001) 存入背包记录
+        userId: customUserId,
         rewardId: reward.id,
         status: 2, // IN STORE
         expiredDate: expiredDate.toISOString(),
         createdAt: new Date().toISOString(),
       };
 
-      // 建立多路径原子事务
       const updates: any = {};
       updates[`users_reward/${userRewardId}`] = userRewardPayload;
 
-      // b. 如果是积分购买，扣除对应路径上的用户积分
+      // if purchasing an EXCHANGE reward, deduct points
       if (reward.rewardType === 1) {
-        // 核心改动：扣减积分路径修正为以 customUserId 为节点
         updates[`users/${customUserId}/currentPoints`] = userData.currentPoints - reward.targetValue;
       }
 
-      // 统一提交事务，防止积分扣了背包没塞进去的卡单情况
+      // update the database in a single transaction
       await update(ref(database), updates);
 
       showToast("Successfully claimed! Checked in My Bag.", "success");
@@ -228,7 +224,7 @@ export default function Rewards() {
         ) : (
           <View style={styles.grid}>
             {rewards.map((reward) => {
-              // 核心改动：渲染列表和限购文字时，实时比对过滤也用 customUserId 
+              // core logic to determine if the reward is sold out or level locked
               const claimedCount = userRewards.filter(
                 (ur) => ur.userId === customUserId && ur.rewardId === reward.id
               ).length;
