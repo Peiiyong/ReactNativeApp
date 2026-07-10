@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { equalTo, onValue, orderByChild, push, query, ref, update } from "firebase/database";
+import { onValue, push, ref, update } from "firebase/database"; // 移除了在当前文件不再需要的 query, equalTo, orderByChild
 import { useCallback, useEffect, useState } from "react";
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
@@ -52,42 +52,62 @@ export default function Rewards() {
     setToast({ visible: true, message, type });
   };
 
-  // get user data
+  // 核心改动：模仿队友的方案，全量读取并从前端 find 查找 matchingKey
   const loadUserData = useCallback(() => {
     const user = auth.currentUser;
     if (!user) return;
 
     const usersRef = ref(database, "users");
-    const userQuery = query(usersRef, orderByChild("authUid"), equalTo(user.uid));
 
-    return onValue(userQuery, (snapshot) => {
+    return onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
-        const dataMap = snapshot.val();
-        const uId = Object.keys(dataMap)[0]; 
-        const data = dataMap[uId];
+        const users = snapshot.val();
         
-        setCustomUserId(uId);
-        setUserData({
-          currentPoints: data.currentPoints ?? 0,
-          level: data.level ?? 1,
-        });
+        // 1:1 还原你队友的匹配逻辑，在前台寻找 authUid 与当前登录 uid 匹配的 key
+        const matchingKey = Object.keys(users).find(
+          (key) => users[key]?.authUid === user.uid
+        );
+
+        if (matchingKey) {
+          const data = users[matchingKey];
+          setCustomUserId(matchingKey); // 成功拿到真正的类似 U00001 的真正主键 ID
+          setUserData({
+            currentPoints: data.currentPoints ?? 0,
+            level: data.level ?? 1,
+          });
+        } else {
+          setCustomUserId(null);
+          console.warn(`No user data found for auth uid: ${user.uid}`);
+        }
       } else {
         setCustomUserId(null);
       }
       setLoading(false);
+    }, (error) => {
+      console.warn("Failed to load user data:", error);
+      showToast("Failed to load user info.", "error");
+      setLoading(false);
     });
   }, []);
 
+  // 修复改动：修复了原先监听器没有正确清理注销的逻辑 Bug
   useEffect(() => {
+    let unsubUser: (() => void) | undefined;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.replace("/login");
+        if (unsubUser) unsubUser();
         return;
       }
-      const unsubUser = loadUserData();
-      return () => unsubUser?.();
+      if (unsubUser) unsubUser(); // 绑定前若有旧的监听则先解绑
+      unsubUser = loadUserData(); // 执行新的监听绑定
     });
-    return unsubscribeAuth;
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubUser) unsubUser(); // 页面销毁时彻底关闭对当前用户数据的实时监听，防止内存泄露
+    };
   }, [loadUserData]);
 
   // get all rewards
@@ -224,7 +244,6 @@ export default function Rewards() {
         ) : (
           <View style={styles.grid}>
             {rewards.map((reward) => {
-              // core logic to determine if the reward is sold out or level locked
               const claimedCount = userRewards.filter(
                 (ur) => ur.userId === customUserId && ur.rewardId === reward.id
               ).length;
