@@ -15,6 +15,11 @@ export default function BottomNavBar() {
       route: "/home",
     },
     {
+      name: "rewards",
+      icon: "gift",
+      route: "/rewards",
+    },
+    {
       name: "history",
       icon: "time",
       route: "/history",
