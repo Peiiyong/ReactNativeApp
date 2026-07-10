@@ -62,7 +62,7 @@ export default function Rewards() {
     return onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
         const users = snapshot.val();
-        
+
         // 1:1 还原你队友的匹配逻辑，在前台寻找 authUid 与当前登录 uid 匹配的 key
         const matchingKey = Object.keys(users).find(
           (key) => users[key]?.authUid === user.uid
@@ -70,7 +70,10 @@ export default function Rewards() {
 
         if (matchingKey) {
           const data = users[matchingKey];
-          setCustomUserId(matchingKey); // 成功拿到真正的类似 U00001 的真正主键 ID
+
+          // 👇 这样改，直接显式获取里面的 userId 字段，看着更直观！
+          setCustomUserId(data.userId ?? matchingKey);
+
           setUserData({
             currentPoints: data.currentPoints ?? 0,
             level: data.level ?? 1,
