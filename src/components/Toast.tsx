@@ -47,7 +47,7 @@ export default function Toast({
         { shadowColor: colors.text}
       ]}
     >
-      <Text style={[ styles.toastText, { color: colors.text2 }]}> {message} </Text>
+      <Text style={[ styles.toastText, { color: colors.textWhite }]}> {message} </Text>
     </View>
   );
 }

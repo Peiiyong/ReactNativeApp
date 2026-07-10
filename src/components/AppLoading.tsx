@@ -12,7 +12,7 @@ export default function AppLoading({
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator color={colors.text2} size="large"/>
+      <ActivityIndicator color={colors.textWhite} size="large"/>
       <Text style={[ styles.text,{ color: colors.text,},]}>{message}</Text>
     </View>
   );

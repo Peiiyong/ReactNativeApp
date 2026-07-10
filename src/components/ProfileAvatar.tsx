@@ -47,7 +47,7 @@ export default function ProfileAvatar({
                     height:size,
                     borderRadius:radius,
                     backgroundColor: colors.primary,
-                    color: colors.text2,
+                    color: colors.textWhite,
                     fontSize:size * 0.38,
                 },
                 ]}
@@ -59,27 +59,27 @@ export default function ProfileAvatar({
         </View>
 
 {/*         {showEditIcon && (
-            <View style={[ styles.camera, { backgroundColor: colors.primary, borderColor: colors.text2 }]}>
+            <View style={[ styles.camera, { backgroundColor: colors.primary, borderColor: colors.textWhite }]}>
             <Ionicons
                 name="camera"
                 size={18}
-                color={colors.text2}
+                color={colors.textWhite}
             />
             </View>
         )} */}
 
         {/* Badge */}
         { (badgeIcon || badgeText) && (
-          <View style={[ styles.badge, { backgroundColor:colors.primary, borderColor:colors.text2, }]} >
+          <View style={[ styles.badge, { backgroundColor:colors.primary, borderColor:colors.textWhite, }]} >
             { badgeIcon && (
               <Ionicons
                 name={badgeIcon}
                 size={18}
-                color={colors.text2}
+                color={colors.textWhite}
               />
             )}
             { badgeText && (
-              <Text style={[ styles.badgeText, { color:colors.text2 }]}>{badgeText}</Text>)
+              <Text style={[ styles.badgeText, { color:colors.textWhite }]}>{badgeText}</Text>)
             }
             </View>
           )

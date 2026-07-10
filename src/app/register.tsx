@@ -145,9 +145,9 @@ export default function Register() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.text2 }]}>
+    <View style={[styles.container, { backgroundColor: colors.textWhite }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.title, { color: colors.text3 }]}>R E G I S T E R</Text>
+        <Text style={[styles.title, { color: colors.textBlack }]}>R E G I S T E R</Text>
 
         {/* Upload Avatar — same pattern as ProfileEdit */}
         <View style={styles.avatarSection}>
@@ -202,7 +202,7 @@ export default function Register() {
         />
 
         <View style={styles.loginRow}>
-          <Text style={[styles.loginLink, { color: colors.text3 }]}>Already have an account? </Text>
+          <Text style={[styles.loginLink, { color: colors.textBlack }]}>Already have an account? </Text>
           <Text
             onPress={() => router.push("/login")}
             style={[styles.loginLink, { color: colors.primary }]}

@@ -44,7 +44,7 @@ export default function BottomNavBar() {
                     <Ionicons
                       name={tab.icon as any}
                       size={28}
-                      color={colors.activeIcon}
+                      color={colors.activeIconWhite}
                     />
                   </View>
                 </LinearGradient>

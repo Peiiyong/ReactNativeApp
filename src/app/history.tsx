@@ -5,7 +5,7 @@ import FilterButton from "@/components/FilterButton";
 import { LinearGradient } from "expo-linear-gradient";
 import { get, onValue, ref } from "firebase/database";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { auth, database } from "../firebase/firebase";
 import { useThemeColors } from "../theme/useThemeColors";
 
@@ -180,19 +180,18 @@ export default function History() {
         <LinearGradient colors={colors.innerBackground} style={styles.container}>
             <AppHeader title="Game History"/>
             <View style={styles.filterContainer}>
-                <View style={styles.filterGroup}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterGroup}>
                     <FilterButton title="All" active={dateFilter==="all"} onPress={()=>setDateFilter("all")} />
                     <FilterButton title="Today" active={dateFilter==="today"} onPress={()=>setDateFilter("today")}/>
-                    <FilterButton title="Last Week" active={dateFilter==="week"} onPress={()=>setDateFilter("week")}/>
-                    <FilterButton title="Last Month" active={dateFilter==="month"} onPress={()=>setDateFilter("month")}/>
-
-                </View>
-                <View style={styles.filterGroup}>
+                    <FilterButton title="Last 7 Days" active={dateFilter==="week"} onPress={()=>setDateFilter("week")}/>
+                    <FilterButton title="Last 30 Days" active={dateFilter==="month"} onPress={()=>setDateFilter("month")}/>
+                </ScrollView>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterGroup}>
                     <FilterButton title="All" active={statusFilter==="all"} onPress={()=>setStatusFilter("all")} />
                     <FilterButton title="WIN" active={statusFilter==="win"} onPress={()=>setStatusFilter("win")} />
                     <FilterButton title="DRAW" active={statusFilter==="draw"} onPress={()=>setStatusFilter("draw")} />
                     <FilterButton title="LOSE" active={statusFilter==="lose"} onPress={()=>setStatusFilter("lose")} />
-                </View>
+                </ScrollView>
             </View>
 
             {loading ? (<AppLoading />

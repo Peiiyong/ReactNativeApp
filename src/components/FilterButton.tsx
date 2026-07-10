@@ -19,7 +19,7 @@ export default function FilterButton({
       onPress={onPress}
       style={[ styles.button, { backgroundColor: active? colors.primary : colors.cardBackground[0]}]}
     >
-      <Text style={[styles.text, { color:active ? colors.text2 : colors.text}]}>
+      <Text style={[styles.text, { color:active ? colors.textWhite : colors.text}]}>
         {title}
         </Text>
     </Pressable>

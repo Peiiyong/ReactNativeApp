@@ -23,8 +23,8 @@ export default function AppBox({
 
   return (
     <View style={[ styles.container, { flex, backgroundColor: backgroundColor ?? colors.primary, borderColor: borderColor ?? colors.text}]}>
-      <Text style={[ styles.label, { color: labelColor ?? colors.text2 }]}>{label}</Text>
-      <Text style={[ styles.value, { color: valueColor ?? colors.text2 }]}>{value}</Text>
+      <Text style={[ styles.label, { color: labelColor ?? colors.textWhite }]}>{label}</Text>
+      <Text style={[ styles.value, { color: valueColor ?? colors.textWhite }]}>{value}</Text>
     </View>
   );
 }

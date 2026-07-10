@@ -114,7 +114,7 @@ export default function GameCarousel({
             <Ionicons
               name="chevron-forward"
               size={22}
-              color={colors.text2}
+              color={colors.textWhite}
             />
           </Pressable>
         )

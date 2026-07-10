@@ -205,7 +205,7 @@ export default function Game() {
 
                       {locked && (
                         <View style={styles.lockOverlay}>
-                          <Ionicons name="lock-closed" size={22} color={colors.text2} />
+                          <Ionicons name="lock-closed" size={22} color={colors.textWhite} />
                         </View>
                       )}
                     </View>

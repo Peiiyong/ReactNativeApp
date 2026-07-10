@@ -68,8 +68,8 @@ export default function Login() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.text2 }]}>
-      <Text style={[styles.title, { color: colors.text3 }]}>
+    <View style={[styles.container, { backgroundColor: colors.textWhite }]}>
+      <Text style={[styles.title, { color: colors.textBlack }]}>
         L O G I N
       </Text>
 
@@ -95,7 +95,7 @@ export default function Login() {
       />
 
       <View style={styles.registerRow}>
-        <Text style={[styles.registerText, { color: colors.text3 }]}>
+        <Text style={[styles.registerText, { color: colors.textBlack }]}>
           Don't have an account?
         </Text>
 

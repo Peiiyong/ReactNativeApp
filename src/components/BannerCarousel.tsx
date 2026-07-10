@@ -39,7 +39,7 @@ const BannerCarousel = forwardRef<
     }));
 
     return (
-    <View style={[ styles.bannerCard, { backgroundColor: colors.text2}]}>
+    <View style={[ styles.bannerCard, { backgroundColor: colors.textWhite}]}>
         <FlatList
           ref={bannerRef}
           data={images}
@@ -71,7 +71,7 @@ const BannerCarousel = forwardRef<
               />
               {showLabel && (
                   <View style={styles.bannerOverlay}>
-                    <Text style={[styles.bannerText, {color:colors.text2}]}>
+                    <Text style={[styles.bannerText, {color:colors.textWhite}]}>
                       Banner {index + 1}
                     </Text>
                   </View>

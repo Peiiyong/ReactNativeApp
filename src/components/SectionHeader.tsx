@@ -34,13 +34,13 @@ export default function SectionHeader({
                 <Ionicons
                 name={icon}
                 size={15}
-                color={colors.text2}
+                color={colors.textWhite}
                 style={{ marginRight: 4 }}
                 />
             )}
 
             {buttonText && (
-                <Text style={[styles.buttonText, { color: colors.text2 }]} >{buttonText}</Text>
+                <Text style={[styles.buttonText, { color: colors.textWhite }]} >{buttonText}</Text>
             )}
             </LinearGradient>
         </Pressable>

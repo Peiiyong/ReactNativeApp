@@ -24,13 +24,13 @@ export default function AppButton({ title, onPress, icon }: AppButtonProps) {
         style={styles.button}
       >
         <View style={styles.content}>
-          <Text style={[ styles.text,{ color: colors.text2 }]}> {title} </Text>
+          <Text style={[ styles.text,{ color: colors.textWhite }]}> {title} </Text>
 
           {icon && (
             <Ionicons
               name={icon}
               size={20}
-              color={colors.text2}
+              color={colors.textWhite}
             />
           )}
         </View>

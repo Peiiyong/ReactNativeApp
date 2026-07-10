@@ -20,7 +20,7 @@ export default function LevelProgressBar({
   const progress = Math.min((currentExp / nextLevelExp) * 100, 100);
 
   return (
-    <View style={[ styles.progressContainer,{ width, backgroundColor: colors.progressBarDefaultColor}]}>
+    <View style={[ styles.progressContainer,{ width, backgroundColor: colors.progressBarColorGrey}]}>
       {/* Progress fill */}
       <LinearGradient
         colors={ colors.buttonGradient }
@@ -29,10 +29,10 @@ export default function LevelProgressBar({
 
       {/* Text inside progress bar */}
       <View style={ styles.progressTextContainer }>
-        <Text style={[ styles.progressText, { color: colors.text2 }]}>
+        <Text style={[ styles.progressText, { color: colors.textWhite }]}>
             Lv.{level}
         </Text>
-        <Text style={[ styles.progressText, { color: progress >= 70 ? colors.text2 : colors.text3 }]}>
+        <Text style={[ styles.progressText, { color: progress >= 70 ? colors.textWhite : colors.textBlack }]}>
             {currentExp}/{nextLevelExp} EXP
         </Text>
       </View>
